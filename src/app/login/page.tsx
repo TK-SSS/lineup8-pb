@@ -29,13 +29,17 @@ export default function LoginPage() {
 
     } else if (mode === 'signup') {
       if (!teamName.trim()) { setError('チーム名を入力してください'); setLoading(false); return }
-      const res = await fetch('/api/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'signup', email, password, teamName }),
-      })
-      const json = await res.json()
-      if (json.error) { setError(json.error); setLoading(false); return }
+      // signUp でユーザー作成＆確認メール送信
+      const { data, error: signUpError } = await supabase.auth.signUp({ email, password })
+      if (signUpError) { setError(signUpError.message); setLoading(false); return }
+      // プロフィールをサーバー側で作成
+      if (data.user) {
+        await fetch('/api/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'create-profile', userId: data.user.id, teamName }),
+        })
+      }
       setMessage('確認メールを送りました。メールのリンクをクリックしてからログインしてください。')
       setMode('login')
 

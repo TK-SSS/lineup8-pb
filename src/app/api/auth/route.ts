@@ -5,15 +5,10 @@ export async function POST(request: Request) {
   const body = await request.json()
   const { action } = body
 
-  if (action === 'signup') {
-    const { email, password, teamName } = body
-    const { data, error } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: false,
-    })
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
-    await supabaseAdmin.from('profiles').insert({ id: data.user.id, team_name: teamName })
+  if (action === 'create-profile') {
+    const { userId, teamName } = body
+    if (!userId) return NextResponse.json({ error: 'userId required' }, { status: 400 })
+    await supabaseAdmin.from('profiles').upsert({ id: userId, team_name: teamName ?? '' }, { onConflict: 'id' })
     return NextResponse.json({ ok: true })
   }
 
