@@ -5,7 +5,7 @@ export function middleware(request: NextRequest) {
   const auth = request.cookies.get('lineup8-auth')?.value
   const { pathname } = request.nextUrl
 
-  if (pathname === '/login') return NextResponse.next()
+  if (pathname === '/login' || pathname === '/reset-password') return NextResponse.next()
 
   if (auth !== 'ok') {
     return NextResponse.redirect(new URL('/login', request.url))

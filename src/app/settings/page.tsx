@@ -1,12 +1,52 @@
 'use client'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
 export default function SettingsPage() {
   const router = useRouter()
+  const [teamName, setTeamName] = useState('')
+  const [teamNameDraft, setTeamNameDraft] = useState('')
+  const [email, setEmail] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [message, setMessage] = useState('')
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+
+  useEffect(() => {
+    async function load() {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+      setEmail(session.user.email ?? '')
+      const { data } = await supabase.from('profiles').select('team_name').eq('id', session.user.id).single()
+      if (data) { setTeamName(data.team_name); setTeamNameDraft(data.team_name) }
+    }
+    load()
+  }, [])
+
+  async function saveTeamName() {
+    setSaving(true)
+    setMessage('')
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+    const { error } = await supabase.from('profiles').upsert({ id: session.user.id, team_name: teamNameDraft.trim() }, { onConflict: 'id' })
+    if (!error) { setTeamName(teamNameDraft.trim()); setMessage('保存しました') }
+    setSaving(false)
+  }
 
   async function handleLogout() {
     await supabase.auth.signOut()
+    document.cookie = 'lineup8-auth=; path=/; max-age=0'
+    router.push('/login')
+  }
+
+  async function handleDeleteAccount() {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+    await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete', userId: session.user.id }),
+    })
     document.cookie = 'lineup8-auth=; path=/; max-age=0'
     router.push('/login')
   }
@@ -15,19 +55,77 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-black text-white px-4 pt-6 pb-4">
       <h1 className="text-xl font-bold text-violet-300 mb-6">設定</h1>
 
-      <div className="space-y-3">
+      {/* チーム名 */}
+      <div className="bg-violet-950/50 border border-violet-800/40 rounded-xl p-4 mb-3">
+        <p className="text-violet-400 text-xs mb-2">チーム名</p>
+        <input
+          value={teamNameDraft}
+          onChange={e => setTeamNameDraft(e.target.value)}
+          className="w-full bg-transparent text-white text-base outline-none border-b border-violet-700 pb-1 mb-3"
+          placeholder="チーム名を入力"
+        />
+        {message && <p className="text-emerald-400 text-xs mb-2">{message}</p>}
         <button
-          onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-4 bg-violet-950/50 border border-violet-800/40 rounded-xl text-left text-red-400 hover:bg-red-950/30 transition-colors"
+          onClick={saveTeamName}
+          disabled={saving || teamNameDraft.trim() === teamName}
+          className="text-sm text-violet-300 border border-violet-600 rounded-lg px-4 py-1.5 disabled:opacity-40"
         >
-          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-            <polyline points="16 17 21 12 16 7" />
-            <line x1="21" y1="12" x2="9" y2="12" />
-          </svg>
-          ログアウト
+          {saving ? '保存中...' : '保存'}
         </button>
       </div>
+
+      {/* メールアドレス */}
+      <div className="bg-violet-950/50 border border-violet-800/40 rounded-xl p-4 mb-3">
+        <p className="text-violet-400 text-xs mb-1">メールアドレス</p>
+        <p className="text-white text-sm">{email}</p>
+      </div>
+
+      {/* ログアウト */}
+      <button
+        onClick={handleLogout}
+        className="w-full flex items-center gap-3 px-4 py-4 bg-violet-950/50 border border-violet-800/40 rounded-xl text-left text-violet-300 hover:bg-violet-900/30 transition-colors mb-3"
+      >
+        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+          <polyline points="16 17 21 12 16 7" />
+          <line x1="21" y1="12" x2="9" y2="12" />
+        </svg>
+        ログアウト
+      </button>
+
+      {/* アカウント削除 */}
+      <button
+        onClick={() => setShowDeleteConfirm(true)}
+        className="w-full flex items-center gap-3 px-4 py-4 bg-red-950/30 border border-red-900/40 rounded-xl text-left text-red-400 hover:bg-red-950/50 transition-colors"
+      >
+        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="3 6 5 6 21 6" />
+          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+          <path d="M10 11v6M14 11v6" />
+          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+        </svg>
+        アカウント削除
+      </button>
+
+      {/* 削除確認モーダル */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center px-6">
+          <div className="bg-violet-950 border border-violet-600 rounded-2xl p-6 w-full max-w-xs">
+            <p className="text-white font-bold text-center mb-2">アカウントを削除しますか？</p>
+            <p className="text-violet-400 text-sm text-center mb-6">すべてのデータが削除されます。この操作は取り消せません。</p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 py-3 rounded-xl border border-violet-600 text-violet-300 text-sm font-bold">
+                キャンセル
+              </button>
+              <button onClick={handleDeleteAccount}
+                className="flex-1 py-3 rounded-xl bg-red-700 text-white text-sm font-bold">
+                削除する
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
