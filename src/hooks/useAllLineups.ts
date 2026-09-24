@@ -6,15 +6,16 @@ import { storage } from '@/lib/storage'
 export function useAllLineups() {
   const [all, setAll] = useState<Record<string, LineupMap>>({})
   const loadComplete = useRef(false)
+  const hasLocalChanges = useRef(false)
 
   useEffect(() => {
-    // Phase 1: show cached data instantly (no server round-trip)
     const cached = storage.loadLineupsSync()
     if (Object.keys(cached).length > 0) setAll(cached)
-    // Phase 2: sync with server in background
     storage.loadLineups().then(data => {
       loadComplete.current = true
-      setAll(data)
+      if (!hasLocalChanges.current) {
+        setAll(data)
+      }
     })
   }, [])
 
@@ -26,7 +27,8 @@ export function useAllLineups() {
 
   const getLineup = (matchId: string): LineupMap => all[matchId] ?? {}
 
-  const setPlayer = (matchId: string, playerId: string, toPos: string | null) =>
+  const setPlayer = (matchId: string, playerId: string, toPos: string | null) => {
+    hasLocalChanges.current = true
     setAll(prev => {
       const cur = { ...(prev[matchId] ?? {}) }
       for (const k of Object.keys(cur)) {
@@ -35,15 +37,19 @@ export function useAllLineups() {
       if (toPos !== null) cur[toPos] = playerId
       return { ...prev, [matchId]: cur }
     })
+  }
 
-  const clearPosition = (matchId: string, pos: string) =>
+  const clearPosition = (matchId: string, pos: string) => {
+    hasLocalChanges.current = true
     setAll(prev => {
       const cur = { ...(prev[matchId] ?? {}) }
       delete cur[pos]
       return { ...prev, [matchId]: cur }
     })
+  }
 
-  const swapPositions = (matchId: string, pos1: string, pos2: string) =>
+  const swapPositions = (matchId: string, pos1: string, pos2: string) => {
+    hasLocalChanges.current = true
     setAll(prev => {
       const cur = { ...(prev[matchId] ?? {}) }
       const p1 = cur[pos1]
@@ -52,15 +58,20 @@ export function useAllLineups() {
       if (p2) cur[pos1] = p2; else delete cur[pos1]
       return { ...prev, [matchId]: cur }
     })
+  }
 
-  const copyLineup = (fromMatchId: string, toMatchId: string) =>
+  const copyLineup = (fromMatchId: string, toMatchId: string) => {
+    hasLocalChanges.current = true
     setAll(prev => ({
       ...prev,
       [toMatchId]: { ...(prev[fromMatchId] ?? {}) },
     }))
+  }
 
-  const clearLineup = (matchId: string) =>
+  const clearLineup = (matchId: string) => {
+    hasLocalChanges.current = true
     setAll(prev => ({ ...prev, [matchId]: {} }))
+  }
 
   return { getLineup, setPlayer, clearPosition, swapPositions, copyLineup, clearLineup }
 }

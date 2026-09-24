@@ -10,7 +10,7 @@ export default function LoginPage() {
   const [mode, setMode] = useState<Mode>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [teamName, setTeamName] = useState('')
+  const [teamName] = useState('')
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
@@ -28,7 +28,6 @@ export default function LoginPage() {
       router.push('/')
 
     } else if (mode === 'signup') {
-      if (!teamName.trim()) { setError('チーム名を入力してください'); setLoading(false); return }
       // signUp でユーザー作成＆確認メール送信
       const { data, error: signUpError } = await supabase.auth.signUp({ email, password })
       if (signUpError) { setError(signUpError.message); setLoading(false); return }
@@ -77,10 +76,6 @@ export default function LoginPage() {
       )}
 
       <form onSubmit={handleSubmit} style={{ width: '100%', maxWidth: 340, display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {mode === 'signup' && (
-          <input type="text" placeholder="チーム名" value={teamName} onChange={e => setTeamName(e.target.value)} required
-            style={{ padding: '12px 16px', borderRadius: 12, border: '1px solid #4c1d95', background: '#1a1a2e', color: 'white', fontSize: 15, outline: 'none' }} />
-        )}
         <input type="email" placeholder="メールアドレス" value={email} onChange={e => setEmail(e.target.value)} required
           style={{ padding: '12px 16px', borderRadius: 12, border: '1px solid #4c1d95', background: '#1a1a2e', color: 'white', fontSize: 15, outline: 'none' }} />
         {mode !== 'forgot' && (

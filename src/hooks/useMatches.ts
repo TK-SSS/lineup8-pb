@@ -19,18 +19,19 @@ export function useMatches() {
   const [matches, setMatches] = useState<Match[]>([])
   const [isLoaded, setIsLoaded] = useState(false)
   const loadComplete = useRef(false)
+  const hasLocalChanges = useRef(false)
 
   useEffect(() => {
-    // Phase 1: show cached data instantly (no server round-trip)
     const cached = storage.loadMatchesSync()
     if (cached.length > 0) {
       setMatches(cached)
       setIsLoaded(true)
     }
-    // Phase 2: sync with server in background
     storage.loadMatches().then(data => {
       loadComplete.current = true
-      setMatches(data)
+      if (!hasLocalChanges.current) {
+        setMatches(data)
+      }
       setIsLoaded(true)
     })
   }, [])
@@ -42,6 +43,7 @@ export function useMatches() {
   }, [matches])
 
   const createMatch = (formation: Formation = '3-3-1'): Match => {
+    hasLocalChanges.current = true
     const m: Match = {
       id: crypto.randomUUID(),
       date: todayStr(),
@@ -54,15 +56,19 @@ export function useMatches() {
     return m
   }
 
-  const updateMatch = (id: string, patch: Partial<Match> | ((m: Match) => Partial<Match>)) =>
+  const updateMatch = (id: string, patch: Partial<Match> | ((m: Match) => Partial<Match>)) => {
+    hasLocalChanges.current = true
     setMatches(prev => prev.map(m => {
       if (m.id !== id) return m
       const p = typeof patch === 'function' ? patch(m) : patch
       return { ...m, ...p }
     }))
+  }
 
-  const deleteMatch = (id: string) =>
+  const deleteMatch = (id: string) => {
+    hasLocalChanges.current = true
     setMatches(prev => prev.filter(m => m.id !== id))
+  }
 
   return { matches, isLoaded, createMatch, updateMatch, deleteMatch }
 }

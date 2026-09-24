@@ -7,18 +7,19 @@ export function usePlayers() {
   const [players, setPlayers] = useState<Player[]>([])
   const [isLoaded, setIsLoaded] = useState(false)
   const loadComplete = useRef(false)
+  const hasLocalChanges = useRef(false)
 
   useEffect(() => {
-    // Phase 1: show cached data instantly (no server round-trip)
     const cached = storage.loadPlayersSync()
     if (cached.length > 0) {
       setPlayers(cached)
       setIsLoaded(true)
     }
-    // Phase 2: sync with server in background
     storage.loadPlayers().then(data => {
       loadComplete.current = true
-      setPlayers(data)
+      if (!hasLocalChanges.current) {
+        setPlayers(data)
+      }
       setIsLoaded(true)
     })
   }, [])
@@ -29,17 +30,20 @@ export function usePlayers() {
     return () => clearTimeout(t)
   }, [players])
 
-  const addPlayer = (number: number, name: string) =>
-    setPlayers(prev => [
-      ...prev,
-      { id: crypto.randomUUID(), number, name },
-    ])
+  const addPlayer = (number: number, name: string) => {
+    hasLocalChanges.current = true
+    setPlayers(prev => [...prev, { id: crypto.randomUUID(), number, name }])
+  }
 
-  const updatePlayer = (id: string, patch: Partial<Omit<Player, 'id'>>) =>
+  const updatePlayer = (id: string, patch: Partial<Omit<Player, 'id'>>) => {
+    hasLocalChanges.current = true
     setPlayers(prev => prev.map(p => (p.id === id ? { ...p, ...patch } : p)))
+  }
 
-  const deletePlayer = (id: string) =>
+  const deletePlayer = (id: string) => {
+    hasLocalChanges.current = true
     setPlayers(prev => prev.filter(p => p.id !== id))
+  }
 
   return { players, isLoaded, addPlayer, updatePlayer, deletePlayer }
 }
