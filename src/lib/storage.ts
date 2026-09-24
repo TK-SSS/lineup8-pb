@@ -2,31 +2,36 @@ import { supabase } from './supabase'
 import type { Player, Match, LineupMap } from '@/types'
 
 async function getUserId(): Promise<string | null> {
-  const { data: { session } } = await supabase.auth.getSession()
+  const { data: { session }, error } = await supabase.auth.getSession()
+  if (error) console.error('[storage] getSession error:', error)
+  if (!session) console.warn('[storage] no session')
   return session?.user?.id ?? null
 }
 
 async function getData<T>(dataType: string, defaultValue: T): Promise<T> {
   const userId = await getUserId()
   if (!userId) return defaultValue
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('app_data')
     .select('data')
     .eq('user_id', userId)
     .eq('data_type', dataType)
     .single()
+  if (error && error.code !== 'PGRST116') console.error('[storage] getData error:', error)
   return (data?.data as T) ?? defaultValue
 }
 
 function setData<T>(dataType: string, value: T): void {
-  getUserId().then(userId => {
-    if (!userId) return
-    supabase.from('app_data').upsert({
+  getUserId().then(async userId => {
+    if (!userId) { console.warn('[storage] setData skipped: no userId'); return }
+    const { error } = await supabase.from('app_data').upsert({
       user_id: userId,
       data_type: dataType,
       data: value,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id,data_type' })
+    if (error) console.error('[storage] upsert error:', error)
+    else console.log('[storage] saved', dataType, 'for', userId)
   })
 }
 
