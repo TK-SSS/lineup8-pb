@@ -1,9 +1,17 @@
 'use client'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
 
 export default function BottomNav() {
   const path = usePathname()
+  const router = useRouter()
+
+  async function handleLogout() {
+    await supabase.auth.signOut()
+    document.cookie = 'lineup8-auth=; path=/; max-age=0'
+    router.push('/login')
+  }
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-black border-t border-violet-500/50 flex">
@@ -46,12 +54,13 @@ export default function BottomNav() {
         </svg>
       </Link>
       <button
-        onClick={() => window.location.reload()}
+        onClick={handleLogout}
         className="flex-1 flex flex-col items-center pt-0.5 pb-0 gap-0.5 transition-colors text-violet-700 hover:text-violet-500 active:text-violet-400"
       >
         <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-          <path d="M3 3v5h5" />
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+          <polyline points="16 17 21 12 16 7" />
+          <line x1="21" y1="12" x2="9" y2="12" />
         </svg>
       </button>
     </nav>

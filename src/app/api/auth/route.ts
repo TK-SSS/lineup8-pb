@@ -1,20 +1,20 @@
 import { NextResponse } from 'next/server'
-
-const PASSWORD = 'nmsss2026'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export async function POST(request: Request) {
-  const { password } = await request.json()
+  const { action, email, password, teamName } = await request.json()
 
-  if (password !== PASSWORD) {
-    return NextResponse.json({ error: 'wrong' }, { status: 401 })
+  if (action === 'signup') {
+    const { data, error } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+    })
+    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    // プロフィール作成
+    await supabaseAdmin.from('profiles').insert({ id: data.user.id, team_name: teamName })
+    return NextResponse.json({ ok: true })
   }
 
-  const res = NextResponse.json({ ok: true })
-  res.cookies.set('lineup8-auth', 'ok', {
-    httpOnly: true,
-    path: '/',
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 30, // 30 days
-  })
-  return res
+  return NextResponse.json({ error: 'unknown action' }, { status: 400 })
 }
