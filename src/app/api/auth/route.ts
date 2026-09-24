@@ -1,6 +1,14 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url)
+  const userId = searchParams.get('userId')
+  if (!userId) return NextResponse.json({ error: 'userId required' }, { status: 400 })
+  const { data } = await supabaseAdmin.from('profiles').select('team_name').eq('id', userId).single()
+  return NextResponse.json({ team_name: data?.team_name ?? '' })
+}
+
 export async function POST(request: Request) {
   const body = await request.json()
   const { action } = body

@@ -17,15 +17,12 @@ export default function SettingsPage() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return
       setEmail(session.user.email ?? '')
-      const { data, error } = await supabase.from('profiles').select('team_name').eq('id', session.user.id).single()
-      if (error) {
-        console.error('[settings] load profile error:', error)
-        // プロフィールがなければ作成
-        if (error.code === 'PGRST116') {
-          await supabase.from('profiles').insert({ id: session.user.id, team_name: '' })
-        }
+      const res = await fetch(`/api/auth?userId=${session.user.id}`)
+      const json = await res.json()
+      if (json.team_name !== undefined) {
+        setTeamName(json.team_name)
+        setTeamNameDraft(json.team_name)
       }
-      if (data) { setTeamName(data.team_name); setTeamNameDraft(data.team_name) }
     }
     load()
   }, [])
