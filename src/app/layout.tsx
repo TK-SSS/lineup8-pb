@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
-import BottomNav from '@/components/BottomNav'
+import ClientLayout from '@/components/ClientLayout'
 
 export const metadata: Metadata = {
   title: 'LineUp 8',
@@ -33,10 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ja" className="h-full">
       <body className="h-full flex flex-col bg-[#0d0a1f]">
-        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-black" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: '3.5rem' }}>
-          {children}
-        </main>
-        <BottomNav />
+        <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
   )
