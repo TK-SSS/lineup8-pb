@@ -112,10 +112,10 @@ export default function AdminPage() {
           return (
             <div key={u.id} className="bg-violet-950/50 border border-violet-800/40 rounded-xl px-4 py-3 flex flex-col gap-2">
               <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
+                <button className="flex-1 min-w-0 text-left" onClick={() => router.push(`/admin/users/${u.id}`)}>
                   <p className="text-white text-sm font-medium truncate">{u.email}</p>
                   <p className="text-violet-400 text-xs">{u.team_name || '—'}</p>
-                </div>
+                </button>
                 <button
                   onClick={() => setDeleteTarget(u)}
                   className="text-rose-500 p-1 shrink-0"

@@ -1,0 +1,93 @@
+'use client'
+import { useState, useEffect } from 'react'
+import { useRouter, useParams } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
+
+type Player = { id: string; name: string; number: string | number }
+type Match = { id: string; date?: string; opponent?: string; formation?: string; score?: string }
+
+export default function UserDetailPage() {
+  const router = useRouter()
+  const { userId } = useParams<{ userId: string }>()
+  const [email, setEmail] = useState('')
+  const [players, setPlayers] = useState<Player[]>([])
+  const [matches, setMatches] = useState<Match[]>([])
+  const [loading, setLoading] = useState(true)
+  const [tab, setTab] = useState<'players' | 'matches'>('players')
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) { router.push('/login'); return }
+      fetch(`/api/admin/userdata?adminId=${session.user.id}&targetId=${userId}`)
+        .then(r => r.json())
+        .then(json => {
+          if (json.error) { router.push('/admin'); return }
+          setEmail(json.email)
+          setPlayers(json.players ?? [])
+          setMatches(json.matches ?? [])
+        })
+        .finally(() => setLoading(false))
+    })
+  }, [router, userId])
+
+  return (
+    <div className="min-h-screen bg-black text-white pb-8">
+      <div className="bg-violet-600 px-4 py-4 flex items-center">
+        <button onClick={() => router.push('/admin')} className="text-white/80 mr-3 p-1 -ml-1">
+          <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </button>
+        <h1 className="flex-1 text-white font-bold text-base text-center pr-7 truncate">{email || '...'}</h1>
+      </div>
+
+      <div className="px-4 pt-4">
+        <div className="flex bg-violet-950/50 border border-violet-800/40 rounded-xl p-1 mb-4">
+          {(['players', 'matches'] as const).map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${tab === t ? 'bg-violet-600 text-white' : 'text-violet-400'}`}
+            >
+              {t === 'players' ? `選手 (${players.length})` : `試合 (${matches.length})`}
+            </button>
+          ))}
+        </div>
+
+        {loading && <p className="text-violet-400 text-sm text-center py-8">読み込み中...</p>}
+
+        {!loading && tab === 'players' && (
+          players.length === 0
+            ? <p className="text-violet-500 text-sm text-center py-8">登録選手なし</p>
+            : <div className="flex flex-col gap-2">
+                {players.map(p => (
+                  <div key={p.id} className="bg-violet-950/50 border border-violet-800/40 rounded-xl px-4 py-3 flex items-center gap-3">
+                    <span className="text-violet-400 text-sm w-8 text-right shrink-0">#{p.number}</span>
+                    <span className="text-white text-sm">{p.name}</span>
+                  </div>
+                ))}
+              </div>
+        )}
+
+        {!loading && tab === 'matches' && (
+          matches.length === 0
+            ? <p className="text-violet-500 text-sm text-center py-8">試合データなし</p>
+            : <div className="flex flex-col gap-2">
+                {matches.map(m => (
+                  <div key={m.id} className="bg-violet-950/50 border border-violet-800/40 rounded-xl px-4 py-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-white text-sm">{m.opponent || '対戦相手未設定'}</span>
+                      {m.score && <span className="text-violet-300 text-sm font-bold">{m.score}</span>}
+                    </div>
+                    <div className="flex gap-3 mt-1">
+                      {m.date && <span className="text-violet-500 text-xs">{m.date}</span>}
+                      {m.formation && <span className="text-violet-500 text-xs">{m.formation}</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+        )}
+      </div>
+    </div>
+  )
+}

@@ -4,7 +4,7 @@ import BottomNav from './BottomNav'
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const showNav = pathname !== '/login'
+  const showNav = pathname !== '/login' && !pathname.startsWith('/admin')
 
   return (
     <>
