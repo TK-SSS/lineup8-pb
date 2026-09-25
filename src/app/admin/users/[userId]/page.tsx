@@ -31,9 +31,9 @@ export default function UserDetailPage() {
   }, [router, userId])
 
   return (
-    <div className="min-h-screen bg-black text-white pb-8">
-      <div className="bg-violet-600 px-4 py-4 flex items-center">
-        <button onClick={() => router.push('/admin')} className="text-white/80 mr-3 p-1 -ml-1">
+    <div className="min-h-screen bg-gray-950 text-white pb-8">
+      <div className="bg-gray-800 border-b border-gray-700 px-4 py-4 flex items-center">
+        <button onClick={() => router.push('/admin')} className="text-gray-400 mr-3 p-1 -ml-1">
           <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
             <path d="M15 18l-6-6 6-6" />
           </svg>
@@ -42,27 +42,27 @@ export default function UserDetailPage() {
       </div>
 
       <div className="px-4 pt-4">
-        <div className="flex bg-violet-950/50 border border-violet-800/40 rounded-xl p-1 mb-4">
+        <div className="flex bg-gray-900 border border-gray-700 rounded-xl p-1 mb-4">
           {(['players', 'matches'] as const).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${tab === t ? 'bg-violet-600 text-white' : 'text-violet-400'}`}
+              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${tab === t ? 'bg-gray-600 text-white' : 'text-gray-500'}`}
             >
               {t === 'players' ? `選手 (${players.length})` : `試合 (${matches.length})`}
             </button>
           ))}
         </div>
 
-        {loading && <p className="text-violet-400 text-sm text-center py-8">読み込み中...</p>}
+        {loading && <p className="text-gray-500 text-sm text-center py-8">読み込み中...</p>}
 
         {!loading && tab === 'players' && (
           players.length === 0
-            ? <p className="text-violet-500 text-sm text-center py-8">登録選手なし</p>
+            ? <p className="text-gray-600 text-sm text-center py-8">登録選手なし</p>
             : <div className="flex flex-col gap-2">
                 {players.map(p => (
-                  <div key={p.id} className="bg-violet-950/50 border border-violet-800/40 rounded-xl px-4 py-3 flex items-center gap-3">
-                    <span className="text-violet-400 text-sm w-8 text-right shrink-0">#{p.number}</span>
+                  <div key={p.id} className="bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 flex items-center gap-3">
+                    <span className="text-gray-500 text-sm w-8 text-right shrink-0">#{p.number}</span>
                     <span className="text-white text-sm">{p.name}</span>
                   </div>
                 ))}
@@ -71,17 +71,17 @@ export default function UserDetailPage() {
 
         {!loading && tab === 'matches' && (
           matches.length === 0
-            ? <p className="text-violet-500 text-sm text-center py-8">試合データなし</p>
+            ? <p className="text-gray-600 text-sm text-center py-8">試合データなし</p>
             : <div className="flex flex-col gap-2">
                 {matches.map(m => (
-                  <div key={m.id} className="bg-violet-950/50 border border-violet-800/40 rounded-xl px-4 py-3">
+                  <div key={m.id} className="bg-gray-900 border border-gray-700 rounded-xl px-4 py-3">
                     <div className="flex items-center justify-between">
                       <span className="text-white text-sm">{m.opponent || '対戦相手未設定'}</span>
-                      {m.score && <span className="text-violet-300 text-sm font-bold">{m.score}</span>}
+                      {m.score && <span className="text-gray-300 text-sm font-bold">{m.score}</span>}
                     </div>
                     <div className="flex gap-3 mt-1">
-                      {m.date && <span className="text-violet-500 text-xs">{m.date}</span>}
-                      {m.formation && <span className="text-violet-500 text-xs">{m.formation}</span>}
+                      {m.date && <span className="text-gray-600 text-xs">{m.date}</span>}
+                      {m.formation && <span className="text-gray-600 text-xs">{m.formation}</span>}
                     </div>
                   </div>
                 ))}
