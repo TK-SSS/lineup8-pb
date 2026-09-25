@@ -201,20 +201,6 @@ export default function SettingsPage() {
         ログアウト
       </button>
 
-      {/* アカウント削除 */}
-      <button
-        onClick={() => setShowDeleteConfirm(true)}
-        className="w-full flex items-center gap-3 px-4 py-4 bg-red-950/30 border border-red-900/40 rounded-xl text-left text-red-400 hover:bg-red-950/50 transition-colors"
-      >
-        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="3 6 5 6 21 6" />
-          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-          <path d="M10 11v6M14 11v6" />
-          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-        </svg>
-        アカウント削除
-      </button>
-
       {/* フィードバック */}
       <div className="bg-violet-950/50 border border-violet-800/40 rounded-xl mt-3 overflow-hidden">
         <button
@@ -261,6 +247,20 @@ export default function SettingsPage() {
         <p className="text-violet-700 text-xs">LineUp 8 v1.0.0</p>
         <p className="text-violet-800 text-xs mt-1">© 2026 LineUp 8</p>
       </div>
+
+      {/* アカウント削除 */}
+      <button
+        onClick={() => setShowDeleteConfirm(true)}
+        className="w-full flex items-center gap-3 px-4 py-4 bg-red-950/30 border border-red-900/40 rounded-xl text-left text-red-400 hover:bg-red-950/50 transition-colors mb-2"
+      >
+        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="3 6 5 6 21 6" />
+          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+          <path d="M10 11v6M14 11v6" />
+          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+        </svg>
+        アカウント削除
+      </button>
 
       {/* 削除確認モーダル */}
       {showDeleteConfirm && (
