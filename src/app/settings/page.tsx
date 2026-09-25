@@ -64,8 +64,11 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white px-4 pt-6 pb-4">
-      <h1 className="text-xl font-bold text-violet-300 mb-6">設定</h1>
+    <div className="min-h-screen bg-black text-white pb-4">
+      <div className="bg-violet-600 px-4 py-4 flex items-center mb-6">
+        <h1 className="flex-1 text-white font-bold text-xl text-center">設定</h1>
+      </div>
+      <div className="px-4">
 
       {/* チーム名 */}
       <div className="bg-violet-950/50 border border-violet-800/40 rounded-xl p-4 mb-3">
@@ -169,6 +172,7 @@ export default function SettingsPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   )
 }
