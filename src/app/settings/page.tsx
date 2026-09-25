@@ -99,7 +99,7 @@ export default function SettingsPage() {
       {/* テーマカラー */}
       <div className="bg-violet-950/50 border border-violet-800/40 rounded-xl p-4 mb-3">
         <p className="text-violet-400 text-xs mb-3">テーマカラー</p>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           {THEMES.map(t => (
             <button
               key={t.id}

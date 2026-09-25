@@ -96,8 +96,8 @@ export default function LoginPage() {
         {message && <p style={{ color: '#34d399', fontSize: 13, textAlign: 'center' }}>{message}</p>}
 
         <button type="submit" disabled={loading}
-          style={{ marginTop: 8, padding: '14px', borderRadius: 12, border: 'none', background: loading ? '#4c1d95' : '#7c3aed', color: 'white', fontWeight: 700, fontSize: 16, cursor: loading ? 'not-allowed' : 'pointer' }}>
-          {loading ? '...' : mode === 'login' ? 'ログイン' : mode === 'signup' ? '登録する' : 'リセットメールを送る'}
+          style={{ marginTop: 8, padding: '14px', borderRadius: 12, border: 'none', background: '#7c3aed', color: 'white', fontWeight: 700, fontSize: 16, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.5 : 1, transition: 'opacity 0.2s' }}>
+          {mode === 'login' ? 'ログイン' : mode === 'signup' ? '登録する' : 'リセットメールを送る'}
         </button>
       </form>
 
