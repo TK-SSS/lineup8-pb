@@ -22,7 +22,7 @@ export async function POST(request: Request) {
   }
 
   const input = username.trim()
-  let email: string | undefined
+  let email: string
 
   if (input.includes('@')) {
     // 既存ユーザー向け後方互換: メールアドレスをそのまま使用
@@ -40,10 +40,11 @@ export async function POST(request: Request) {
     }
 
     const { data: authData } = await supabaseAdmin.auth.admin.getUserById(profile.id)
-    email = authData?.user?.email
-    if (!email) {
+    const found = authData?.user?.email
+    if (!found) {
       return NextResponse.json({ error: 'ユーザー名またはパスワードが違います' }, { status: 401 })
     }
+    email = found
   }
 
   const { data, error } = await supabaseAnon.auth.signInWithPassword({ email, password })
