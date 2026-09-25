@@ -24,12 +24,16 @@ export default function LoginPage() {
     if (mode === 'login') {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) { setError('メールアドレスまたはパスワードが違います'); setLoading(false); return }
-      const { data: { user } } = await supabase.auth.getUser()
-      document.cookie = 'lineup8-auth=ok; path=/; max-age=2592000; SameSite=Lax'
-      if (user) {
-        const res = await fetch(`/api/admin/check?userId=${user.id}`)
-        const json = await res.json()
-        if (json.admin) {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        await fetch('/api/auth/cookie', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: session.access_token }),
+        })
+        const adminRes = await fetch(`/api/admin/check?userId=${session.user.id}`)
+        const adminJson = await adminRes.json()
+        if (adminJson.admin) {
           router.push('/admin')
           return
         }
@@ -113,6 +117,12 @@ export default function LoginPage() {
           ← ログインに戻る
         </button>
       )}
+
+      <p style={{ marginTop: 32, color: '#4c1d95', fontSize: 11, textAlign: 'center' }}>
+        <a href="/privacy" style={{ color: '#6d28d9', textDecoration: 'none' }}>プライバシーポリシー</a>
+        {' '}・{' '}
+        <a href="/terms" style={{ color: '#6d28d9', textDecoration: 'none' }}>利用規約</a>
+      </p>
     </div>
   )
 }

@@ -11,7 +11,13 @@ export async function GET(request: Request) {
 
   const res = NextResponse.json({ admin: isAdmin })
   if (isAdmin) {
-    res.cookies.set('lineup8-admin', 'ok', { path: '/', maxAge: 2592000, sameSite: 'lax' })
+    res.cookies.set('lineup8-admin', 'ok', {
+      path: '/',
+      maxAge: 2592000,
+      sameSite: 'lax',
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+    })
   }
   return res
 }

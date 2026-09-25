@@ -77,7 +77,7 @@ export default function SettingsPage() {
 
   async function handleLogout() {
     await supabase.auth.signOut()
-    document.cookie = 'lineup8-auth=; path=/; max-age=0'
+    await fetch('/api/auth/cookie', { method: 'DELETE' })
     router.push('/login')
   }
 
@@ -86,10 +86,13 @@ export default function SettingsPage() {
     if (!session) return
     await fetch('/api/auth', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
       body: JSON.stringify({ action: 'delete', userId: session.user.id }),
     })
-    document.cookie = 'lineup8-auth=; path=/; max-age=0'
+    await fetch('/api/auth/cookie', { method: 'DELETE' })
     router.push('/login')
   }
 
@@ -171,6 +174,16 @@ export default function SettingsPage() {
           </svg>
         </Link>
       )}
+
+      {/* プライバシーポリシー・利用規約 */}
+      <div className="flex gap-2 mb-3">
+        <Link href="/privacy" className="flex-1 flex items-center justify-center gap-2 px-3 py-3 bg-violet-950/50 border border-violet-800/40 rounded-xl text-violet-400 text-xs hover:bg-violet-900/30 transition-colors">
+          プライバシーポリシー
+        </Link>
+        <Link href="/terms" className="flex-1 flex items-center justify-center gap-2 px-3 py-3 bg-violet-950/50 border border-violet-800/40 rounded-xl text-violet-400 text-xs hover:bg-violet-900/30 transition-colors">
+          利用規約
+        </Link>
+      </div>
 
       {/* 使い方 */}
       <Link
