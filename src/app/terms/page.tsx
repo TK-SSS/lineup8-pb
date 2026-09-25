@@ -6,7 +6,7 @@ export default function TermsPage() {
 
   return (
     <div className="min-h-screen bg-black text-white pb-10">
-      <div className="bg-violet-600 px-4 py-4 flex items-center mb-6">
+      <div className="bg-violet-600 px-4 py-5 flex items-center mb-6">
         <button onClick={() => router.back()} className="text-white/80 mr-3 p-1 -ml-1">
           <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
             <path d="M15 18l-6-6 6-6" />

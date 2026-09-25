@@ -123,7 +123,7 @@ export default function MatchesPage() {
   return (
     <div className="min-h-full bg-black">
       {/* Header */}
-      <div className="bg-violet-600 px-4 py-4 flex items-center">
+      <div className="bg-violet-600 px-4 py-5 flex items-center">
         <h1 className="flex-1 text-white font-bold text-xl text-center">試合リスト</h1>
         <button
           onClick={handleNew}

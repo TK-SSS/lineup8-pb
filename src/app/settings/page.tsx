@@ -180,7 +180,7 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-black text-white pb-4">
-      <div className="bg-violet-600 px-4 py-4 flex items-center mb-6">
+      <div className="bg-violet-600 px-4 py-5 flex items-center mb-6">
         <h1 className="flex-1 text-white font-bold text-xl text-center">設定</h1>
       </div>
       <div className="px-4">

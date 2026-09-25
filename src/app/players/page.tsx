@@ -172,7 +172,7 @@ export default function PlayersPage() {
 
   return (
     <div>
-      <div className="bg-violet-600 px-4 py-4 flex items-center">
+      <div className="bg-violet-600 px-4 py-5 flex items-center">
         <h1 className="flex-1 text-white font-bold text-xl text-center">選手管理</h1>
         <span className="text-sm text-violet-200 shrink-0">{isLoaded ? `${players.length}人` : ''}</span>
       </div>

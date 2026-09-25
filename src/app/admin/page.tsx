@@ -104,7 +104,7 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gray-950 text-white pb-8">
-      <div className="bg-gray-800 border-b border-gray-700 px-4 py-4 flex items-center">
+      <div className="bg-gray-800 border-b border-gray-700 px-4 py-5 flex items-center">
         <button onClick={() => router.push('/')} className="text-gray-400 mr-3 p-1 -ml-1">
           <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
             <path d="M15 18l-6-6 6-6" />
