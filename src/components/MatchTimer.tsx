@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 
 const DEFAULT_DURATION = 15
 
-export default function MatchTimer() {
+export default function MatchTimer({ matchId }: { matchId?: string }) {
   const [visible, setVisible] = useState(false)
   const [running, setRunning] = useState(false)
   const [startedAt, setStartedAt] = useState<number | null>(null)
@@ -11,6 +11,29 @@ export default function MatchTimer() {
   const [mode, setMode] = useState<'elapsed' | 'remaining'>('elapsed')
   const [durationMin, setDurationMin] = useState(DEFAULT_DURATION)
   const [, setTick] = useState(0)
+
+  useEffect(() => {
+    if (!matchId) return
+    try {
+      const saved = localStorage.getItem(`timer-${matchId}`)
+      if (saved) {
+        const s = JSON.parse(saved)
+        setVisible(s.visible ?? false)
+        setRunning(s.running ?? false)
+        setStartedAt(s.startedAt ?? null)
+        setAccumulatedMs(s.accumulatedMs ?? 0)
+        setMode(s.mode ?? 'elapsed')
+        setDurationMin(s.durationMin ?? DEFAULT_DURATION)
+      }
+    } catch { /* ignore */ }
+  }, [matchId])
+
+  useEffect(() => {
+    if (!matchId) return
+    try {
+      localStorage.setItem(`timer-${matchId}`, JSON.stringify({ visible, running, startedAt, accumulatedMs, mode, durationMin }))
+    } catch { /* ignore */ }
+  }, [matchId, visible, running, startedAt, accumulatedMs, mode, durationMin])
 
   useEffect(() => {
     if (!running) return
@@ -48,6 +71,9 @@ export default function MatchTimer() {
     setRunning(false)
     setStartedAt(null)
     setAccumulatedMs(0)
+    if (matchId) {
+      try { localStorage.removeItem(`timer-${matchId}`) } catch { /* ignore */ }
+    }
   }
 
   function handleDurationChange(min: number) {

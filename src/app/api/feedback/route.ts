@@ -6,8 +6,17 @@ export async function POST(request: Request) {
   if (!userId || !message?.trim()) {
     return NextResponse.json({ error: 'userId and message required' }, { status: 400 })
   }
-  const { data: user } = await supabaseAdmin.auth.admin.getUserById(userId)
-  const email = user?.user?.email ?? ''
+
+  const authHeader = request.headers.get('Authorization')
+  const token = authHeader?.replace('Bearer ', '')
+  if (!token) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+
+  const { data: { user: caller }, error: authError } = await supabaseAdmin.auth.getUser(token)
+  if (authError || !caller || caller.id !== userId) {
+    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  }
+
+  const email = caller.email ?? ''
 
   const { error } = await supabaseAdmin.from('feedbacks').insert({
     user_id: userId,

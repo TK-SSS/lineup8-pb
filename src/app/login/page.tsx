@@ -103,6 +103,15 @@ export default function LoginPage() {
           style={{ marginTop: 8, padding: '14px', borderRadius: 12, border: 'none', background: '#7c3aed', color: 'white', fontWeight: 700, fontSize: 16, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.5 : 1, transition: 'opacity 0.2s' }}>
           {mode === 'login' ? 'ログイン' : mode === 'signup' ? '登録する' : 'リセットメールを送る'}
         </button>
+        {mode === 'signup' && (
+          <p style={{ fontSize: 11, color: '#6d28d9', textAlign: 'center', lineHeight: 1.6 }}>
+            登録することで
+            <a href="/privacy" style={{ color: '#7c3aed', textDecoration: 'underline' }}>プライバシーポリシー</a>
+            および
+            <a href="/terms" style={{ color: '#7c3aed', textDecoration: 'underline' }}>利用規約</a>
+            に同意したことになります
+          </p>
+        )}
       </form>
 
       {mode === 'login' && (

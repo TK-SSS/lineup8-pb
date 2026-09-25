@@ -280,7 +280,7 @@ export default function LineupScreen({
       </div>
 
       <div className="sticky bottom-0 bg-black z-10">
-        <MatchTimer />
+        <MatchTimer matchId={match.id} />
       </div>
 
       {/* Clear confirmation modal */}

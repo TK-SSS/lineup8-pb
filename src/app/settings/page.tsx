@@ -20,6 +20,11 @@ export default function SettingsPage() {
   const [feedbackText, setFeedbackText] = useState('')
   const [feedbackSending, setFeedbackSending] = useState(false)
   const [feedbackMessage, setFeedbackMessage] = useState('')
+  const [passwordOpen, setPasswordOpen] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordSaving, setPasswordSaving] = useState(false)
+  const [passwordMessage, setPasswordMessage] = useState('')
 
   useEffect(() => {
     setCurrentTheme(getSavedTheme())
@@ -58,12 +63,33 @@ export default function SettingsPage() {
     applyTheme(id)
   }
 
+  async function handlePasswordChange() {
+    if (newPassword !== confirmPassword) { setPasswordMessage('パスワードが一致しません'); return }
+    if (newPassword.length < 8) { setPasswordMessage('8文字以上で入力してください'); return }
+    setPasswordSaving(true)
+    setPasswordMessage('')
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    if (error) {
+      setPasswordMessage('変更に失敗しました')
+    } else {
+      setNewPassword('')
+      setConfirmPassword('')
+      setPasswordMessage('パスワードを変更しました')
+      setTimeout(() => setPasswordMessage(''), 3000)
+    }
+    setPasswordSaving(false)
+  }
+
   async function handleFeedbackSend() {
     if (!feedbackText.trim() || !userId) return
     setFeedbackSending(true)
+    const { data: { session } } = await supabase.auth.getSession()
     const res = await fetch('/api/feedback', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(session ? { 'Authorization': `Bearer ${session.access_token}` } : {}),
+      },
       body: JSON.stringify({ userId, message: feedbackText }),
     })
     const json = await res.json()
@@ -106,20 +132,22 @@ export default function SettingsPage() {
       {/* チーム名 */}
       <div className="bg-violet-950/50 border border-violet-800/40 rounded-xl p-4 mb-3">
         <p className="text-violet-400 text-xs mb-2">チーム名</p>
-        <input
-          value={teamNameDraft}
-          onChange={e => setTeamNameDraft(e.target.value)}
-          className="w-full bg-transparent text-white text-base outline-none border-b border-violet-700 pb-1 mb-3"
-          placeholder="チーム名を入力"
-        />
-        {message && <p className="text-emerald-400 text-xs mb-2">{message}</p>}
-        <button
-          onClick={saveTeamName}
-          disabled={saving || teamNameDraft.trim() === teamName}
-          className="text-sm text-violet-300 border border-violet-600 rounded-lg px-4 py-1.5 disabled:opacity-40"
-        >
-          {saving ? '保存中...' : '保存'}
-        </button>
+        <div className="flex items-center gap-2 border-b border-violet-700 pb-1">
+          <input
+            value={teamNameDraft}
+            onChange={e => setTeamNameDraft(e.target.value)}
+            className="flex-1 bg-transparent text-white text-base outline-none"
+            placeholder="チーム名を入力"
+          />
+          <button
+            onClick={saveTeamName}
+            disabled={saving || teamNameDraft.trim() === teamName}
+            className="text-sm text-violet-300 border border-violet-600 rounded-lg px-3 py-1 disabled:opacity-40 shrink-0"
+          >
+            {saving ? '保存中...' : '保存'}
+          </button>
+        </div>
+        {message && <p className="text-emerald-400 text-xs mt-2">{message}</p>}
       </div>
 
       {/* テーマカラー */}
@@ -203,6 +231,59 @@ export default function SettingsPage() {
         </svg>
         ログアウト
       </button>
+
+      {/* パスワード変更 */}
+      <div className="bg-violet-950/50 border border-violet-800/40 rounded-xl mt-3 overflow-hidden">
+        <button
+          onClick={() => setPasswordOpen(o => !o)}
+          className="w-full flex items-center justify-between px-4 py-4 text-left"
+        >
+          <span className="text-violet-300 text-sm flex items-center gap-2">
+            <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            パスワード変更
+          </span>
+          <svg
+            className="w-4 h-4 text-violet-600 transition-transform duration-200 shrink-0"
+            style={{ transform: passwordOpen ? 'rotate(90deg)' : 'rotate(0deg)' }}
+            viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+          >
+            <path d="M9 18l6-6-6-6" />
+          </svg>
+        </button>
+        {passwordOpen && (
+          <div className="px-4 pb-4 border-t border-violet-800/40 pt-3 flex flex-col gap-2">
+            <input
+              type="password"
+              value={newPassword}
+              onChange={e => setNewPassword(e.target.value)}
+              placeholder="新しいパスワード（8文字以上）"
+              className="w-full bg-transparent text-white text-sm outline-none border border-violet-700 rounded-lg p-3 placeholder-violet-600"
+            />
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={e => setConfirmPassword(e.target.value)}
+              placeholder="確認（再入力）"
+              className="w-full bg-transparent text-white text-sm outline-none border border-violet-700 rounded-lg p-3 placeholder-violet-600"
+            />
+            {passwordMessage && (
+              <p className={`text-xs ${passwordMessage.includes('失敗') || passwordMessage.includes('一致') || passwordMessage.includes('8文字') ? 'text-red-400' : 'text-emerald-400'}`}>
+                {passwordMessage}
+              </p>
+            )}
+            <button
+              onClick={handlePasswordChange}
+              disabled={passwordSaving || !newPassword || newPassword !== confirmPassword}
+              className="text-sm text-violet-300 border border-violet-600 rounded-lg px-4 py-1.5 disabled:opacity-40 self-start"
+            >
+              {passwordSaving ? '変更中...' : '変更する'}
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* フィードバック */}
       <div className="bg-violet-950/50 border border-violet-800/40 rounded-xl mt-3 overflow-hidden">
