@@ -16,6 +16,7 @@ export default function SettingsPage() {
   const [currentTheme, setCurrentTheme] = useState<ThemeId>('violet')
   const [isAdmin, setIsAdmin] = useState(false)
   const [userId, setUserId] = useState('')
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [feedbackText, setFeedbackText] = useState('')
   const [feedbackSending, setFeedbackSending] = useState(false)
   const [feedbackMessage, setFeedbackMessage] = useState('')
@@ -215,23 +216,44 @@ export default function SettingsPage() {
       </button>
 
       {/* フィードバック */}
-      <div className="bg-violet-950/50 border border-violet-800/40 rounded-xl p-4 mt-3">
-        <p className="text-violet-400 text-xs mb-2">フィードバック・ご意見</p>
-        <textarea
-          value={feedbackText}
-          onChange={e => setFeedbackText(e.target.value)}
-          placeholder="ご意見・ご要望・不具合の報告など"
-          rows={3}
-          className="w-full bg-transparent text-white text-sm outline-none border border-violet-700 rounded-lg p-3 placeholder-violet-600 resize-none mb-2"
-        />
-        {feedbackMessage && <p className="text-emerald-400 text-xs mb-2">{feedbackMessage}</p>}
+      <div className="bg-violet-950/50 border border-violet-800/40 rounded-xl mt-3 overflow-hidden">
         <button
-          onClick={handleFeedbackSend}
-          disabled={feedbackSending || !feedbackText.trim()}
-          className="text-sm text-violet-300 border border-violet-600 rounded-lg px-4 py-1.5 disabled:opacity-40"
+          onClick={() => setFeedbackOpen(o => !o)}
+          className="w-full flex items-center justify-between px-4 py-4 text-left"
         >
-          {feedbackSending ? '送信中...' : '送信'}
+          <span className="text-violet-300 text-sm flex items-center gap-2">
+            <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            フィードバック・ご意見
+          </span>
+          <svg
+            className="w-4 h-4 text-violet-600 transition-transform duration-200 shrink-0"
+            style={{ transform: feedbackOpen ? 'rotate(90deg)' : 'rotate(0deg)' }}
+            viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+          >
+            <path d="M9 18l6-6-6-6" />
+          </svg>
         </button>
+        {feedbackOpen && (
+          <div className="px-4 pb-4 border-t border-violet-800/40 pt-3">
+            <textarea
+              value={feedbackText}
+              onChange={e => setFeedbackText(e.target.value)}
+              placeholder="ご意見・ご要望・不具合の報告など"
+              rows={3}
+              className="w-full bg-transparent text-white text-sm outline-none border border-violet-700 rounded-lg p-3 placeholder-violet-600 resize-none mb-2"
+            />
+            {feedbackMessage && <p className="text-emerald-400 text-xs mb-2">{feedbackMessage}</p>}
+            <button
+              onClick={handleFeedbackSend}
+              disabled={feedbackSending || !feedbackText.trim()}
+              className="text-sm text-violet-300 border border-violet-600 rounded-lg px-4 py-1.5 disabled:opacity-40"
+            >
+              {feedbackSending ? '送信中...' : '送信'}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* バージョン・著作権 */}
