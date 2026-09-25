@@ -6,6 +6,7 @@ import { usePlayers } from '@/hooks/usePlayers'
 import { useAllLineups } from '@/hooks/useAllLineups'
 import LineupScreen from '@/components/LineupScreen'
 import { supabase } from '@/lib/supabase'
+import { storage } from '@/lib/storage'
 
 export default function HomePage() {
   const { matches, isLoaded: matchesLoaded, createMatch, updateMatch } = useMatches()
@@ -50,6 +51,7 @@ export default function HomePage() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) return
+      storage.pingActivity()
       fetch(`/api/auth?userId=${session.user.id}`)
         .then(r => r.json())
         .then(json => {

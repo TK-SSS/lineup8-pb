@@ -50,7 +50,21 @@ function writeCache<T>(key: string, value: T): void {
   try { localStorage.setItem(`lineup8:${key}`, JSON.stringify(value)) } catch {}
 }
 
+let activityPinged = false
+
+async function pingActivity(): Promise<void> {
+  if (activityPinged) return
+  activityPinged = true
+  const userId = await getUserId()
+  if (!userId) return
+  await supabase
+    .from('profiles')
+    .update({ last_active_at: new Date().toISOString() })
+    .eq('id', userId)
+}
+
 export const storage = {
+  pingActivity,
   loadPlayersSync: (): Player[]                          => readCache('players', []),
   loadMatchesSync: (): Match[]                           => readCache('matches', []),
   loadLineupsSync: (): Record<string, LineupMap>         => readCache('lineups', {}),
