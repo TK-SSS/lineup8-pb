@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { storage } from '@/lib/storage'
 import { THEMES, type ThemeId, applyTheme, getSavedTheme } from '@/lib/theme'
 import Link from 'next/link'
 
@@ -17,6 +18,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
   const [currentTheme, setCurrentTheme] = useState<ThemeId>('violet')
   const [isAdmin, setIsAdmin] = useState(false)
   const [userId, setUserId] = useState('')
@@ -125,6 +127,34 @@ export default function SettingsPage() {
       setTimeout(() => setFeedbackMessage(''), 3000)
     }
     setFeedbackSending(false)
+  }
+
+  function downloadCsv(filename: string, rows: string[]) {
+    const bom = '﻿'
+    const blob = new Blob([bom + rows.join('\n')], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  async function handleExportPlayers() {
+    const players = await storage.loadPlayers()
+    const rows = ['背番号,名前', ...players.map(p => `${p.number},${p.name}`)]
+    downloadCsv('lineup8-players.csv', rows)
+  }
+
+  async function handleExportMatches() {
+    const matches = await storage.loadMatches()
+    const rows = [
+      '日付,時刻,対戦相手,フォーメーション,得点,失点,メモ',
+      ...matches.map(m =>
+        `${m.date},${m.time},"${m.opponent}",${m.formation},${m.scoreUs ?? ''},${m.scoreOpp ?? ''},"${m.memo ?? ''}"`
+      ),
+    ]
+    downloadCsv('lineup8-matches.csv', rows)
   }
 
   async function handleLogout() {
@@ -379,6 +409,33 @@ export default function SettingsPage() {
         )}
       </div>
 
+      {/* データエクスポート */}
+      <div className="bg-violet-950/50 border border-violet-800/40 rounded-xl p-4 mt-3">
+        <p className="text-violet-400 text-xs mb-3">データをエクスポート（CSV）</p>
+        <div className="flex gap-2">
+          <button
+            onClick={handleExportPlayers}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-violet-300 border border-violet-700 rounded-lg hover:bg-violet-900/30 transition-colors"
+          >
+            <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z" />
+              <polyline points="17 3 17 8 12 8" />
+            </svg>
+            選手リスト
+          </button>
+          <button
+            onClick={handleExportMatches}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-violet-300 border border-violet-700 rounded-lg hover:bg-violet-900/30 transition-colors"
+          >
+            <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z" />
+              <polyline points="17 3 17 8 12 8" />
+            </svg>
+            試合リスト
+          </button>
+        </div>
+      </div>
+
       {/* プライバシーポリシー・利用規約 */}
       <div className="flex gap-2 mt-3 mb-3">
         <Link href="/privacy" className="flex-1 flex items-center justify-center px-3 py-3 bg-violet-950/50 border border-violet-800/40 rounded-xl text-violet-400 text-xs hover:bg-violet-900/30 transition-colors">
@@ -391,7 +448,7 @@ export default function SettingsPage() {
 
       {/* アカウント削除 */}
       <button
-        onClick={() => setShowDeleteConfirm(true)}
+        onClick={() => { setShowDeleteConfirm(true); setDeleteConfirmText('') }}
         className="w-full flex items-center gap-3 px-4 py-4 bg-red-950/30 border border-red-900/40 rounded-xl text-left text-red-400 hover:bg-red-950/50 transition-colors mb-2"
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -414,14 +471,22 @@ export default function SettingsPage() {
         <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center px-6">
           <div className="bg-violet-950 border border-violet-600 rounded-2xl p-6 w-full max-w-xs">
             <p className="text-white font-bold text-center mb-2">アカウントを削除しますか？</p>
-            <p className="text-violet-400 text-sm text-center mb-6">すべてのデータが削除されます。この操作は取り消せません。</p>
+            <p className="text-violet-400 text-sm text-center mb-4">すべてのデータが削除されます。この操作は取り消せません。</p>
+            <p className="text-violet-500 text-xs text-center mb-2">確認のため「削除する」と入力してください</p>
+            <input
+              value={deleteConfirmText}
+              onChange={e => setDeleteConfirmText(e.target.value)}
+              placeholder="削除する"
+              className="w-full bg-transparent text-white text-sm text-center outline-none border border-violet-700 rounded-lg p-2 mb-4 placeholder-violet-800"
+            />
             <div className="flex gap-3">
               <button onClick={() => setShowDeleteConfirm(false)}
                 className="flex-1 py-3 rounded-xl border border-violet-600 text-violet-300 text-sm font-bold">
                 キャンセル
               </button>
               <button onClick={handleDeleteAccount}
-                className="flex-1 py-3 rounded-xl bg-red-700 text-white text-sm font-bold">
+                disabled={deleteConfirmText !== '削除する'}
+                className="flex-1 py-3 rounded-xl bg-red-700 text-white text-sm font-bold disabled:opacity-30">
                 削除する
               </button>
             </div>

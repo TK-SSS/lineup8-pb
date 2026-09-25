@@ -131,7 +131,8 @@ export default function LoginPage() {
           {mode === 'login' ? 'ログイン' : mode === 'signup' ? '登録する' : 'リセットメールを送る'}
         </button>
         {mode === 'signup' && (
-          <p style={{ fontSize: 11, color: '#6d28d9', textAlign: 'center', lineHeight: 1.6 }}>
+          <p style={{ fontSize: 11, color: '#6d28d9', textAlign: 'center', lineHeight: 1.8 }}>
+            ※18歳未満の方は保護者の同意が必要です<br />
             登録することで
             <a href="/privacy" style={{ color: '#7c3aed', textDecoration: 'underline' }}>プライバシーポリシー</a>
             および
