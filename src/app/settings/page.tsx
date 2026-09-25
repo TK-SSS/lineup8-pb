@@ -15,6 +15,10 @@ export default function SettingsPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [currentTheme, setCurrentTheme] = useState<ThemeId>('violet')
   const [isAdmin, setIsAdmin] = useState(false)
+  const [userId, setUserId] = useState('')
+  const [feedbackText, setFeedbackText] = useState('')
+  const [feedbackSending, setFeedbackSending] = useState(false)
+  const [feedbackMessage, setFeedbackMessage] = useState('')
 
   useEffect(() => {
     setCurrentTheme(getSavedTheme())
@@ -22,6 +26,7 @@ export default function SettingsPage() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return
       setEmail(session.user.email ?? '')
+      setUserId(session.user.id)
       const [authRes, adminRes] = await Promise.all([
         fetch(`/api/auth?userId=${session.user.id}`),
         fetch(`/api/admin/check?userId=${session.user.id}`),
@@ -50,6 +55,23 @@ export default function SettingsPage() {
   function handleThemeChange(id: ThemeId) {
     setCurrentTheme(id)
     applyTheme(id)
+  }
+
+  async function handleFeedbackSend() {
+    if (!feedbackText.trim() || !userId) return
+    setFeedbackSending(true)
+    const res = await fetch('/api/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, message: feedbackText }),
+    })
+    const json = await res.json()
+    if (json.ok) {
+      setFeedbackText('')
+      setFeedbackMessage('送信しました。ありがとうございます！')
+      setTimeout(() => setFeedbackMessage(''), 3000)
+    }
+    setFeedbackSending(false)
   }
 
   async function handleLogout() {
@@ -191,6 +213,32 @@ export default function SettingsPage() {
         </svg>
         アカウント削除
       </button>
+
+      {/* フィードバック */}
+      <div className="bg-violet-950/50 border border-violet-800/40 rounded-xl p-4 mt-3">
+        <p className="text-violet-400 text-xs mb-2">フィードバック・ご意見</p>
+        <textarea
+          value={feedbackText}
+          onChange={e => setFeedbackText(e.target.value)}
+          placeholder="ご意見・ご要望・不具合の報告など"
+          rows={3}
+          className="w-full bg-transparent text-white text-sm outline-none border border-violet-700 rounded-lg p-3 placeholder-violet-600 resize-none mb-2"
+        />
+        {feedbackMessage && <p className="text-emerald-400 text-xs mb-2">{feedbackMessage}</p>}
+        <button
+          onClick={handleFeedbackSend}
+          disabled={feedbackSending || !feedbackText.trim()}
+          className="text-sm text-violet-300 border border-violet-600 rounded-lg px-4 py-1.5 disabled:opacity-40"
+        >
+          {feedbackSending ? '送信中...' : '送信'}
+        </button>
+      </div>
+
+      {/* バージョン・著作権 */}
+      <div className="mt-6 mb-2 text-center">
+        <p className="text-violet-700 text-xs">LineUp 8 v1.0.0</p>
+        <p className="text-violet-800 text-xs mt-1">© 2026 LineUp 8</p>
+      </div>
 
       {/* 削除確認モーダル */}
       {showDeleteConfirm && (

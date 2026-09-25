@@ -82,6 +82,21 @@ export default function AdminPage() {
       </div>
 
       <div className="px-4 pt-5 flex flex-col gap-4">
+        <button
+          onClick={() => router.push('/admin/feedbacks')}
+          className="w-full flex items-center justify-between px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-left"
+        >
+          <div className="flex items-center gap-2">
+            <svg className="w-5 h-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            <span className="text-white text-sm">フィードバック</span>
+          </div>
+          <svg className="w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 18l6-6-6-6" />
+          </svg>
+        </button>
+
         <div className="grid grid-cols-3 gap-3">
           {[
             { label: '総ユーザー', value: users.length, color: 'text-white' },
