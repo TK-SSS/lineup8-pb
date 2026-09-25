@@ -119,14 +119,7 @@ export default function HelpPage() {
       </div>
 
       <div className="px-4 flex flex-col gap-2">
-        <div className="bg-violet-700/40 border border-violet-500/50 rounded-xl px-4 py-3 mb-1 flex items-center gap-3">
-          <span className="text-2xl shrink-0">📱</span>
-          <div>
-            <p className="text-violet-100 text-sm font-bold">ホーム画面に追加すると便利！</p>
-            <p className="text-violet-400 text-xs mt-0.5">アプリのようにすぐ起動できます。詳しくは下の「ホーム画面に追加する方法」をご覧ください。</p>
-          </div>
-        </div>
-        {sections.map((s, i) => (
+{sections.map((s, i) => (
           <div key={i} className={`border rounded-xl overflow-hidden ${s.warning ? 'bg-rose-950/40 border-rose-800/50' : 'bg-violet-950/50 border-violet-800/40'}`}>
             <button
               className="w-full flex items-center justify-between px-4 py-4 text-left"
