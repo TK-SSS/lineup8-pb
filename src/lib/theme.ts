@@ -1,12 +1,12 @@
 export const THEMES = [
-  { id: 'violet', label: 'バイオレット', oklch: 'oklch(0.541 0.281 293.009)' },
-  { id: 'blue',   label: 'ブルー',       oklch: 'oklch(0.546 0.245 262.881)' },
-  { id: 'emerald',label: 'グリーン',     oklch: 'oklch(0.596 0.145 163.225)' },
-  { id: 'rose',   label: 'ローズ',       oklch: 'oklch(0.586 0.253 17.585)'  },
-  { id: 'amber',  label: 'アンバー',     oklch: 'oklch(0.666 0.179 58.318)'  },
-  { id: 'yellow', label: 'イエロー',     oklch: 'oklch(0.681 0.162 75.834)'  },
-  { id: 'lime',   label: 'ライム',       oklch: 'oklch(0.648 0.2   131.684)' },
-  { id: 'pink',   label: 'ピンク',       oklch: 'oklch(0.592 0.249 0.584)'   },
+  { id: 'violet', label: 'バイオレット', oklch: 'oklch(0.541 0.281 293.009)' }, // hue 293°
+  { id: 'blue',   label: 'ブルー',       oklch: 'oklch(0.546 0.245 262.881)' }, // hue 263°
+  { id: 'emerald',label: 'グリーン',     oklch: 'oklch(0.596 0.145 163.225)' }, // hue 163°
+  { id: 'lime',   label: 'ライム',       oklch: 'oklch(0.648 0.2   131.684)' }, // hue 132°
+  { id: 'yellow', label: 'イエロー',     oklch: 'oklch(0.681 0.162 75.834)'  }, // hue  76°
+  { id: 'amber',  label: 'アンバー',     oklch: 'oklch(0.666 0.179 58.318)'  }, // hue  58°
+  { id: 'rose',   label: 'ローズ',       oklch: 'oklch(0.586 0.253 17.585)'  }, // hue  18°
+  { id: 'pink',   label: 'ピンク',       oklch: 'oklch(0.592 0.249 0.584)'   }, // hue   1°
 ] as const
 
 export type ThemeId = typeof THEMES[number]['id']
