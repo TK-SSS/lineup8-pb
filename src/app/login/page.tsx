@@ -5,12 +5,29 @@ import { supabase } from '@/lib/supabase'
 
 type Mode = 'login' | 'signup' | 'forgot'
 
+const USERNAME_RE = /^[a-z0-9_]{3,20}$/
+
+function toJapaneseError(msg: string): string {
+  if (/already registered|already been registered|already exists/i.test(msg))
+    return 'このメールアドレスはすでに登録されています'
+  if (/invalid email/i.test(msg))
+    return 'メールアドレスの形式が正しくありません'
+  if (/password should be at least/i.test(msg))
+    return 'パスワードは6文字以上で入力してください'
+  if (/weak password/i.test(msg))
+    return 'パスワードが脆弱すぎます。文字・数字を組み合わせてください'
+  if (/signup.*(disabled|not allowed)/i.test(msg))
+    return '現在、新規登録を受け付けていません'
+  return msg
+}
+
 export default function LoginPage() {
   const router = useRouter()
   const [mode, setMode] = useState<Mode>('login')
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
@@ -19,6 +36,7 @@ export default function LoginPage() {
     setMode(m)
     setError('')
     setMessage('')
+    setConfirmPassword('')
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -37,11 +55,22 @@ export default function LoginPage() {
       if (!res.ok) { setError(json.error || 'ログインに失敗しました'); setLoading(false); return }
 
       await supabase.auth.setSession(json.session)
-
       router.push(json.isAdmin ? '/admin' : '/')
 
     } else if (mode === 'signup') {
       if (!username.trim()) { setError('ユーザー名を入力してください'); setLoading(false); return }
+      if (!USERNAME_RE.test(username)) {
+        setError('ユーザー名は半角英数字・アンダースコアのみ、3〜20文字で入力してください')
+        setLoading(false); return
+      }
+      if (password.length < 8) {
+        setError('パスワードは8文字以上で入力してください')
+        setLoading(false); return
+      }
+      if (password !== confirmPassword) {
+        setError('パスワードが一致しません')
+        setLoading(false); return
+      }
 
       const checkRes = await fetch('/api/auth', {
         method: 'POST',
@@ -52,7 +81,7 @@ export default function LoginPage() {
       if (!checkJson.available) { setError('このユーザー名は使用されています'); setLoading(false); return }
 
       const { data, error: signUpError } = await supabase.auth.signUp({ email, password })
-      if (signUpError) { setError(signUpError.message); setLoading(false); return }
+      if (signUpError) { setError(toJapaneseError(signUpError.message)); setLoading(false); return }
 
       if (data.user) {
         const profileRes = await fetch('/api/auth', {
@@ -78,7 +107,7 @@ export default function LoginPage() {
     setLoading(false)
   }
 
-  const input: React.CSSProperties = { padding: '12px 16px', borderRadius: 12, border: '1px solid #4c1d95', background: '#1a1a2e', color: 'white', fontSize: 15, outline: 'none', width: '100%', boxSizing: 'border-box' }
+  const input: React.CSSProperties = { padding: '12px 16px', borderRadius: 12, border: '1px solid #4c1d95', background: '#1a1a2e', color: 'white', fontSize: 16, outline: 'none', width: '100%', boxSizing: 'border-box' }
 
   return (
     <div style={{ minHeight: '100svh', background: '#0a0a1a', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
@@ -105,22 +134,27 @@ export default function LoginPage() {
 
       <form onSubmit={handleSubmit} style={{ width: '100%', maxWidth: 340, display: 'flex', flexDirection: 'column', gap: 12 }}>
         {mode !== 'forgot' && (
-          <input
-            type="text"
-            placeholder={mode === 'login' ? 'ユーザー名' : 'ユーザー名（半角英数字）'}
-            value={username}
-            onChange={e => setUsername(e.target.value.replace(/\s/g, '').toLowerCase())}
-            required
-            autoCapitalize="none"
-            autoCorrect="off"
-            style={input}
-          />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <input
+              type="text"
+              placeholder={mode === 'login' ? 'ユーザー名' : 'ユーザー名（半角英数字・_ 3〜20文字）'}
+              value={username}
+              onChange={e => setUsername(e.target.value.replace(/\s/g, '').toLowerCase())}
+              required
+              autoCapitalize="none"
+              autoCorrect="off"
+              style={input}
+            />
+          </div>
         )}
         {(mode === 'signup' || mode === 'forgot') && (
           <input type="email" placeholder="メールアドレス" value={email} onChange={e => setEmail(e.target.value)} required style={input} />
         )}
         {mode !== 'forgot' && (
           <input type="password" placeholder="パスワード" value={password} onChange={e => setPassword(e.target.value)} required style={input} />
+        )}
+        {mode === 'signup' && (
+          <input type="password" placeholder="パスワード（確認）" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required style={input} />
         )}
 
         {error && <p style={{ color: '#f87171', fontSize: 13, textAlign: 'center' }}>{error}</p>}

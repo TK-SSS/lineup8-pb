@@ -51,7 +51,6 @@ export default function HomePage() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) return
-      storage.pingActivity()
       fetch(`/api/auth?userId=${session.user.id}`)
         .then(r => r.json())
         .then(json => {

@@ -11,7 +11,7 @@ function ScoreBtn({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="w-7 h-7 flex items-center justify-center text-violet-200 text-lg font-bold active:text-white active:scale-110 transition-all"
+      className="w-11 h-11 flex items-center justify-center text-violet-200 text-lg font-bold active:text-white active:scale-110 transition-all"
     >
       {label}
     </button>
@@ -46,7 +46,8 @@ export default function MatchHeader({ match, teamName, onUpdate }: Props) {
         <div className="flex flex-col items-center gap-0.5">
           <div className="relative">
             <input
-              className="bg-violet-700 text-white text-xs font-bold text-center rounded-lg px-2 py-0.5 w-28 outline-none border border-violet-400/60 focus:border-violet-200 placeholder-violet-400 transition-colors"
+              className="bg-violet-700 text-white font-bold text-center rounded-lg px-2 py-0.5 w-28 outline-none border border-violet-400/60 focus:border-violet-200 placeholder-violet-400 transition-colors"
+              style={{ fontSize: 16 }}
               value={match.opponent}
               placeholder="相手チーム名"
               onChange={e => onUpdate({ opponent: e.target.value })}

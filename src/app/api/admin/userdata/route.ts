@@ -14,9 +14,10 @@ export async function GET(request: Request) {
   if (!adminId || !targetId) return NextResponse.json({ error: 'params required' }, { status: 400 })
   if (!(await verifyAdmin(adminId))) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
-  const [{ data: targetUser }, { data: appData }] = await Promise.all([
+  const [{ data: targetUser }, { data: appData }, { data: profile }] = await Promise.all([
     supabaseAdmin.auth.admin.getUserById(targetId),
     supabaseAdmin.from('app_data').select('data_type, data').eq('user_id', targetId),
+    supabaseAdmin.from('profiles').select('username, team_name').eq('id', targetId).single(),
   ])
 
   const players = appData?.find(d => d.data_type === 'players')?.data ?? []
@@ -24,6 +25,8 @@ export async function GET(request: Request) {
 
   return NextResponse.json({
     email: targetUser?.user?.email ?? '',
+    username: profile?.username ?? '',
+    teamName: profile?.team_name ?? '',
     players,
     matches,
   })

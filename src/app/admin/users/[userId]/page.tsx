@@ -10,6 +10,8 @@ export default function UserDetailPage() {
   const router = useRouter()
   const { userId } = useParams<{ userId: string }>()
   const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
+  const [teamName, setTeamName] = useState('')
   const [players, setPlayers] = useState<Player[]>([])
   const [matches, setMatches] = useState<Match[]>([])
   const [loading, setLoading] = useState(true)
@@ -23,6 +25,8 @@ export default function UserDetailPage() {
         .then(json => {
           if (json.error) { router.push('/admin'); return }
           setEmail(json.email)
+          setUsername(json.username ?? '')
+          setTeamName(json.teamName ?? '')
           setPlayers(json.players ?? [])
           setMatches(json.matches ?? [])
         })
@@ -38,7 +42,14 @@ export default function UserDetailPage() {
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
-        <h1 className="flex-1 text-white font-bold text-base text-center pr-7 truncate">{email || '...'}</h1>
+        <div className="flex-1 flex flex-col items-center pr-7 min-w-0">
+          <p className="text-white font-bold text-base truncate max-w-full">
+            {username ? `@${username}` : (email || '...')}
+          </p>
+          {username && teamName && (
+            <p className="text-gray-500 text-xs truncate max-w-full">{teamName}</p>
+          )}
+        </div>
       </div>
 
       <div className="px-4 pt-4">

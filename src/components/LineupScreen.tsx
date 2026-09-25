@@ -159,16 +159,20 @@ export default function LineupScreen({
         <button
           onClick={onPrev}
           disabled={matchIndex === 0}
-          className="w-10 h-10 flex items-center justify-center rounded-full text-violet-400 disabled:opacity-20 active:bg-violet-900/40 text-3xl"
+          className="w-10 h-10 flex items-center justify-center rounded-lg border border-violet-700 bg-violet-950 text-violet-400 disabled:opacity-20 active:bg-violet-800 transition-colors"
         >
-          ‹
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
         </button>
         <button
           onClick={onNext}
           disabled={matchIndex === totalMatches - 1}
-          className="w-10 h-10 flex items-center justify-center rounded-full text-violet-400 disabled:opacity-20 active:bg-violet-900/40 text-3xl"
+          className="w-10 h-10 flex items-center justify-center rounded-lg border border-violet-700 bg-violet-950 text-violet-400 disabled:opacity-20 active:bg-violet-800 transition-colors"
         >
-          ›
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 18l6-6-6-6" />
+          </svg>
         </button>
 
         {/* date / time / formation — center */}

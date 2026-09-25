@@ -24,11 +24,10 @@ export async function POST(request: Request) {
   const input = username.trim()
   let email: string
 
-  if (input.includes('@')) {
-    // 既存ユーザー向け後方互換: メールアドレスをそのまま使用
+  if (input.includes('@') && input === process.env.ADMIN_EMAIL) {
+    // 管理者のみメールアドレスでログイン可
     email = input
   } else {
-    // ユーザー名からメールアドレスを検索
     const { data: profile } = await supabaseAdmin
       .from('profiles')
       .select('id')

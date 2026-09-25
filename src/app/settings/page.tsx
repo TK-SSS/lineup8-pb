@@ -236,12 +236,12 @@ export default function SettingsPage() {
       {/* テーマカラー */}
       <div className="bg-violet-950/50 border border-violet-800/40 rounded-xl p-4 mb-3">
         <p className="text-violet-400 text-xs mb-3">テーマカラー</p>
-        <div className="flex flex-wrap gap-3">
+        <div className="flex">
           {THEMES.map(t => (
             <button
               key={t.id}
               onClick={() => handleThemeChange(t.id as ThemeId)}
-              className="flex flex-col items-center gap-1.5"
+              className="flex-1 flex flex-col items-center gap-1.5"
               title={t.label}
             >
               <span

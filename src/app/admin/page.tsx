@@ -52,22 +52,31 @@ export default function AdminPage() {
     })
   }, [router])
 
+  async function getToken(): Promise<string | null> {
+    const { data: { session } } = await supabase.auth.getSession()
+    return session?.access_token ?? null
+  }
+
   function toggleFeedback() {
-    if (!feedbackOpen && !feedbackLoaded && userId) {
-      fetch(`/api/feedback?adminId=${userId}`)
-        .then(r => r.json())
-        .then(json => { if (json.feedbacks) setFeedbacks(json.feedbacks) })
-        .finally(() => setFeedbackLoaded(true))
+    if (!feedbackOpen && !feedbackLoaded) {
+      getToken().then(token => {
+        if (!token) return
+        fetch('/api/feedback', { headers: { 'Authorization': `Bearer ${token}` } })
+          .then(r => r.json())
+          .then(json => { if (json.feedbacks) setFeedbacks(json.feedbacks) })
+          .finally(() => setFeedbackLoaded(true))
+      })
     }
     setFeedbackOpen(o => !o)
   }
 
   async function markRead(id: string) {
-    if (!userId) return
+    const token = await getToken()
+    if (!token) return
     await fetch('/api/feedback', {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminId: userId, id }),
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ id }),
     })
     setFeedbacks(f => f.map(x => x.id === id ? { ...x, read: true } : x))
   }

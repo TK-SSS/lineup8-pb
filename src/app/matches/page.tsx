@@ -2,6 +2,7 @@
 import { useRouter } from 'next/navigation'
 import { useState, useRef, useEffect } from 'react'
 import { useMatches } from '@/hooks/useMatches'
+import { storage } from '@/lib/storage'
 import type { Match } from '@/types'
 
 function formatDate(date: string) {
@@ -51,8 +52,8 @@ function MatchRow({
         </button>
 
         <button onClick={onSelect} className="flex-1 px-2 py-3 text-left flex items-center gap-2 min-w-0">
-          <span className="text-violet-300 font-black text-base w-10 shrink-0">{formatDate(match.date)}</span>
-          <span className="text-violet-500 text-sm w-10 shrink-0">{match.time || '—'}</span>
+          <span className="text-violet-300 font-black text-base w-10 shrink-0 mr-3">{formatDate(match.date)}</span>
+          <span className="text-violet-500 text-sm w-12 shrink-0">{match.time || '—'}</span>
           <span className={`text-base font-bold flex-1 truncate ${match.opponent ? 'text-white' : 'text-violet-700 italic'}`}>
             {match.opponent || '未設定'}
           </span>
@@ -114,9 +115,8 @@ export default function MatchesPage() {
   function handleNew() {
     const prev = matches[matches.length - 1]
     const m = createMatch(prev?.formation ?? '3-3-1')
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('lineup8-nav-to-match', m.id)
-    }
+    storage.saveMatches([...matches, m])
+    localStorage.setItem('lineup8-nav-to-match', m.id)
     router.push('/')
   }
 
