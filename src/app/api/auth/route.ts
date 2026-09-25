@@ -5,8 +5,8 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const userId = searchParams.get('userId')
   if (!userId) return NextResponse.json({ error: 'userId required' }, { status: 400 })
-  const { data } = await supabaseAdmin.from('profiles').select('team_name').eq('id', userId).single()
-  return NextResponse.json({ team_name: data?.team_name ?? '' })
+  const { data } = await supabaseAdmin.from('profiles').select('team_name, username').eq('id', userId).single()
+  return NextResponse.json({ team_name: data?.team_name ?? '', username: data?.username ?? '' })
 }
 
 export async function POST(request: Request) {
@@ -14,10 +14,27 @@ export async function POST(request: Request) {
   const { action } = body
 
   if (action === 'create-profile') {
-    const { userId, teamName } = body
+    const { userId, teamName, username } = body
     if (!userId) return NextResponse.json({ error: 'userId required' }, { status: 400 })
-    await supabaseAdmin.from('profiles').upsert({ id: userId, team_name: teamName ?? '' }, { onConflict: 'id' })
+    const row: Record<string, string> = { id: userId, team_name: teamName ?? '' }
+    if (username?.trim()) row.username = username.trim().toLowerCase()
+    const { error } = await supabaseAdmin.from('profiles').upsert(row, { onConflict: 'id' })
+    if (error?.code === '23505') {
+      return NextResponse.json({ error: 'このユーザー名は使用されています' }, { status: 409 })
+    }
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json({ ok: true })
+  }
+
+  if (action === 'check-username') {
+    const { username } = body
+    if (!username?.trim()) return NextResponse.json({ available: false })
+    const { data } = await supabaseAdmin
+      .from('profiles')
+      .select('id')
+      .eq('username', username.trim().toLowerCase())
+      .single()
+    return NextResponse.json({ available: !data })
   }
 
   if (action === 'delete') {

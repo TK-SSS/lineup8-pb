@@ -9,6 +9,10 @@ export default function SettingsPage() {
   const router = useRouter()
   const [teamName, setTeamName] = useState('')
   const [teamNameDraft, setTeamNameDraft] = useState('')
+  const [username, setUsername] = useState('')
+  const [usernameDraft, setUsernameDraft] = useState('')
+  const [usernameSaving, setUsernameSaving] = useState(false)
+  const [usernameMessage, setUsernameMessage] = useState('')
   const [email, setEmail] = useState('')
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
@@ -42,11 +46,33 @@ export default function SettingsPage() {
         setTeamName(json.team_name)
         setTeamNameDraft(json.team_name)
       }
+      if (json.username !== undefined) {
+        setUsername(json.username)
+        setUsernameDraft(json.username)
+      }
       const adminJson = await adminRes.json()
       setIsAdmin(adminJson.admin === true)
     }
     load()
   }, [])
+
+  async function saveUsername() {
+    setUsernameSaving(true)
+    setUsernameMessage('')
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+    const val = usernameDraft.trim().toLowerCase()
+    const { error } = await supabase
+      .from('profiles')
+      .upsert({ id: session.user.id, username: val }, { onConflict: 'id' })
+    if (error) {
+      setUsernameMessage(error.code === '23505' ? 'このユーザー名は使用されています' : '保存に失敗しました')
+    } else {
+      setUsername(val)
+      setUsernameMessage('保存しました')
+    }
+    setUsernameSaving(false)
+  }
 
   async function saveTeamName() {
     setSaving(true)
@@ -148,6 +174,33 @@ export default function SettingsPage() {
           </button>
         </div>
         {message && <p className="text-emerald-400 text-xs mt-2">{message}</p>}
+      </div>
+
+      {/* ユーザー名 */}
+      <div className="bg-violet-950/50 border border-violet-800/40 rounded-xl p-4 mb-3">
+        <p className="text-violet-400 text-xs mb-2">ユーザー名（ログインに使用）</p>
+        <div className="flex items-center gap-2 border-b border-violet-700 pb-1">
+          <input
+            value={usernameDraft}
+            onChange={e => setUsernameDraft(e.target.value.replace(/\s/g, '').toLowerCase())}
+            className="flex-1 bg-transparent text-white text-base outline-none"
+            placeholder="ユーザー名を入力"
+            autoCapitalize="none"
+            autoCorrect="off"
+          />
+          <button
+            onClick={saveUsername}
+            disabled={usernameSaving || usernameDraft.trim() === username || !usernameDraft.trim()}
+            className="text-sm text-violet-300 border border-violet-600 rounded-lg px-3 py-1 disabled:opacity-40 shrink-0"
+          >
+            {usernameSaving ? '保存中...' : '保存'}
+          </button>
+        </div>
+        {usernameMessage && (
+          <p className={`text-xs mt-2 ${usernameMessage.includes('使用') || usernameMessage.includes('失敗') ? 'text-red-400' : 'text-emerald-400'}`}>
+            {usernameMessage}
+          </p>
+        )}
       </div>
 
       {/* テーマカラー */}

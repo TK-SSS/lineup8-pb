@@ -8,12 +8,18 @@ type Mode = 'login' | 'signup' | 'forgot'
 export default function LoginPage() {
   const router = useRouter()
   const [mode, setMode] = useState<Mode>('login')
+  const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [teamName] = useState('')
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
+
+  function switchMode(m: Mode) {
+    setMode(m)
+    setError('')
+    setMessage('')
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -22,38 +28,45 @@ export default function LoginPage() {
     setLoading(true)
 
     if (mode === 'login') {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) { setError('メールアドレスまたはパスワードが違います'); setLoading(false); return }
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session) {
-        await fetch('/api/auth/cookie', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: session.access_token }),
-        })
-        const adminRes = await fetch(`/api/admin/check?userId=${session.user.id}`)
-        const adminJson = await adminRes.json()
-        if (adminJson.admin) {
-          router.push('/admin')
-          return
-        }
-      }
-      router.push('/')
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: username.trim(), password }),
+      })
+      const json = await res.json()
+      if (!res.ok) { setError(json.error || 'ログインに失敗しました'); setLoading(false); return }
+
+      await supabase.auth.setSession(json.session)
+
+      router.push(json.isAdmin ? '/admin' : '/')
 
     } else if (mode === 'signup') {
-      // signUp でユーザー作成＆確認メール送信
+      if (!username.trim()) { setError('ユーザー名を入力してください'); setLoading(false); return }
+
+      const checkRes = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'check-username', username }),
+      })
+      const checkJson = await checkRes.json()
+      if (!checkJson.available) { setError('このユーザー名は使用されています'); setLoading(false); return }
+
       const { data, error: signUpError } = await supabase.auth.signUp({ email, password })
       if (signUpError) { setError(signUpError.message); setLoading(false); return }
-      // プロフィールをサーバー側で作成
+
       if (data.user) {
-        await fetch('/api/auth', {
+        const profileRes = await fetch('/api/auth', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'create-profile', userId: data.user.id, teamName }),
+          body: JSON.stringify({ action: 'create-profile', userId: data.user.id, username, teamName: '' }),
         })
+        const profileJson = await profileRes.json()
+        if (!profileRes.ok) { setError(profileJson.error || '登録に失敗しました'); setLoading(false); return }
       }
       setMessage('確認メールを送りました。メールのリンクをクリックしてからログインしてください。')
-      setMode('login')
+      switchMode('login')
+      setUsername('')
+      setPassword('')
 
     } else {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -65,6 +78,8 @@ export default function LoginPage() {
     setLoading(false)
   }
 
+  const input: React.CSSProperties = { padding: '12px 16px', borderRadius: 12, border: '1px solid #4c1d95', background: '#1a1a2e', color: 'white', fontSize: 15, outline: 'none', width: '100%', boxSizing: 'border-box' }
+
   return (
     <div style={{ minHeight: '100svh', background: '#0a0a1a', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
       <img src="/icon-192.png" alt="LineUp 8" style={{ width: 80, height: 80, borderRadius: 16, marginBottom: 16 }} />
@@ -73,10 +88,10 @@ export default function LoginPage() {
 
       {mode !== 'forgot' && (
         <div style={{ display: 'flex', background: '#1a1a2e', borderRadius: 12, padding: 4, marginBottom: 24, width: '100%', maxWidth: 340 }}>
-          <button onClick={() => { setMode('login'); setError(''); setMessage('') }} style={{ flex: 1, padding: '8px', borderRadius: 8, border: 'none', background: mode === 'login' ? '#7c3aed' : 'transparent', color: mode === 'login' ? 'white' : '#7c3aed', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+          <button onClick={() => switchMode('login')} style={{ flex: 1, padding: '8px', borderRadius: 8, border: 'none', background: mode === 'login' ? '#7c3aed' : 'transparent', color: mode === 'login' ? 'white' : '#7c3aed', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
             ログイン
           </button>
-          <button onClick={() => { setMode('signup'); setError(''); setMessage('') }} style={{ flex: 1, padding: '8px', borderRadius: 8, border: 'none', background: mode === 'signup' ? '#7c3aed' : 'transparent', color: mode === 'signup' ? 'white' : '#7c3aed', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+          <button onClick={() => switchMode('signup')} style={{ flex: 1, padding: '8px', borderRadius: 8, border: 'none', background: mode === 'signup' ? '#7c3aed' : 'transparent', color: mode === 'signup' ? 'white' : '#7c3aed', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
             新規登録
           </button>
         </div>
@@ -89,11 +104,23 @@ export default function LoginPage() {
       )}
 
       <form onSubmit={handleSubmit} style={{ width: '100%', maxWidth: 340, display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <input type="email" placeholder="メールアドレス" value={email} onChange={e => setEmail(e.target.value)} required
-          style={{ padding: '12px 16px', borderRadius: 12, border: '1px solid #4c1d95', background: '#1a1a2e', color: 'white', fontSize: 15, outline: 'none' }} />
         {mode !== 'forgot' && (
-          <input type="password" placeholder="パスワード" value={password} onChange={e => setPassword(e.target.value)} required
-            style={{ padding: '12px 16px', borderRadius: 12, border: '1px solid #4c1d95', background: '#1a1a2e', color: 'white', fontSize: 15, outline: 'none' }} />
+          <input
+            type="text"
+            placeholder={mode === 'login' ? 'ユーザー名' : 'ユーザー名（半角英数字）'}
+            value={username}
+            onChange={e => setUsername(e.target.value.replace(/\s/g, '').toLowerCase())}
+            required
+            autoCapitalize="none"
+            autoCorrect="off"
+            style={input}
+          />
+        )}
+        {(mode === 'signup' || mode === 'forgot') && (
+          <input type="email" placeholder="メールアドレス" value={email} onChange={e => setEmail(e.target.value)} required style={input} />
+        )}
+        {mode !== 'forgot' && (
+          <input type="password" placeholder="パスワード" value={password} onChange={e => setPassword(e.target.value)} required style={input} />
         )}
 
         {error && <p style={{ color: '#f87171', fontSize: 13, textAlign: 'center' }}>{error}</p>}
@@ -115,13 +142,13 @@ export default function LoginPage() {
       </form>
 
       {mode === 'login' && (
-        <button onClick={() => { setMode('forgot'); setError(''); setMessage('') }}
+        <button onClick={() => switchMode('forgot')}
           style={{ marginTop: 16, background: 'none', border: 'none', color: '#7c3aed', fontSize: 13, cursor: 'pointer' }}>
           パスワードをお忘れですか？
         </button>
       )}
       {mode === 'forgot' && (
-        <button onClick={() => { setMode('login'); setError(''); setMessage('') }}
+        <button onClick={() => switchMode('login')}
           style={{ marginTop: 16, background: 'none', border: 'none', color: '#7c3aed', fontSize: 13, cursor: 'pointer' }}>
           ← ログインに戻る
         </button>
