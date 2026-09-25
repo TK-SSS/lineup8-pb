@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
   // 日本からのアクセスのみ許可
-  const country = request.geo?.country ?? request.headers.get('x-vercel-ip-country')
+  const country = request.headers.get('x-vercel-ip-country')
   if (country && country !== 'JP') {
     return new NextResponse('このサービスは日本国内からのみご利用いただけます。', {
       status: 403,

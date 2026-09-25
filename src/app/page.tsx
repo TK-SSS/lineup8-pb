@@ -5,6 +5,7 @@ import { useMatches } from '@/hooks/useMatches'
 import { usePlayers } from '@/hooks/usePlayers'
 import { useAllLineups } from '@/hooks/useAllLineups'
 import LineupScreen from '@/components/LineupScreen'
+import { supabase } from '@/lib/supabase'
 
 export default function HomePage() {
   const { matches, isLoaded: matchesLoaded, createMatch, updateMatch } = useMatches()
@@ -12,6 +13,9 @@ export default function HomePage() {
   const { getLineup, setPlayer, swapPositions, copyLineup, clearLineup } = useAllLineups()
 
   const [currentIndex, setCurrentIndex] = useState<number>(-1)
+  const [teamName, setTeamName] = useState(() =>
+    typeof window !== 'undefined' ? (localStorage.getItem('lineup8-team-name') ?? '') : ''
+  )
   const [animKey, setAnimKey] = useState(0)
   const [animDir, setAnimDir] = useState<'left' | 'right'>('left')
   const [showPlayerChangeWarning, setShowPlayerChangeWarning] = useState(false)
@@ -42,6 +46,20 @@ export default function HomePage() {
       action()
     }
   }
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) return
+      fetch(`/api/auth?userId=${session.user.id}`)
+        .then(r => r.json())
+        .then(json => {
+          if (json.team_name !== undefined) {
+            setTeamName(json.team_name)
+            localStorage.setItem('lineup8-team-name', json.team_name)
+          }
+        })
+    })
+  }, [])
 
   useEffect(() => {
     if (matches.length > 0 && currentIndex === -1) {
@@ -139,6 +157,7 @@ export default function HomePage() {
           match={match}
           lineup={lineup}
           players={resolvedPlayers}
+          teamName={teamName}
           matchIndex={currentIndex}
           totalMatches={matches.length}
           onUpdateMatch={patch => updateMatch(match.id, patch)}

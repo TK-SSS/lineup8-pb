@@ -24,6 +24,7 @@ interface Props {
   match: Match
   lineup: LineupMap
   players: Player[]
+  teamName: string
   matchIndex: number
   totalMatches: number
   onUpdateMatch: (patch: Partial<Match>) => void
@@ -39,6 +40,7 @@ export default function LineupScreen({
   match,
   lineup,
   players,
+  teamName,
   matchIndex,
   totalMatches,
   onUpdateMatch,
@@ -149,7 +151,7 @@ export default function LineupScreen({
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <MatchHeader match={match} onUpdate={onUpdateMatch} />
+      <MatchHeader match={match} teamName={teamName} onUpdate={onUpdateMatch} />
 
       {/* Navigation row */}
       <div className="flex items-center px-1 py-0.5 gap-0">

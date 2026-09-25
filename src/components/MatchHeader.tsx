@@ -3,6 +3,7 @@ import type { Match } from '@/types'
 
 interface Props {
   match: Match
+  teamName: string
   onUpdate: (patch: Partial<Match>) => void
 }
 
@@ -17,7 +18,7 @@ function ScoreBtn({ label, onClick }: { label: string; onClick: () => void }) {
   )
 }
 
-export default function MatchHeader({ match, onUpdate }: Props) {
+export default function MatchHeader({ match, teamName, onUpdate }: Props) {
 
   const us = match.scoreUs ?? 0
   const opp = match.scoreOpp ?? 0
@@ -29,7 +30,7 @@ export default function MatchHeader({ match, onUpdate }: Props) {
         {/* Our score */}
         <div className="flex flex-col items-center gap-0.5">
           <div className="bg-violet-700 text-white text-xs font-bold text-center rounded-lg px-2 py-0.5 w-16 border border-violet-400/60">
-            仲本
+            {teamName || '自チーム'}
           </div>
           <div className="flex items-center gap-0.5">
             <ScoreBtn label="−" onClick={() => onUpdate({ scoreUs: Math.max(0, us - 1) })} />
