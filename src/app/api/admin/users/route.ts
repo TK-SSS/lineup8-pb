@@ -16,7 +16,7 @@ export async function GET(request: Request) {
 
   const [{ data: authData, error: usersError }, { data: profiles }] = await Promise.all([
     supabaseAdmin.auth.admin.listUsers({ perPage: 1000 }),
-    supabaseAdmin.from('profiles').select('id, team_name, last_active_at'),
+    supabaseAdmin.from('profiles').select('id, username, team_name, last_active_at'),
   ])
 
   if (usersError) return NextResponse.json({ error: usersError.message }, { status: 500 })
@@ -26,6 +26,7 @@ export async function GET(request: Request) {
   const users = (authData?.users ?? []).map(u => ({
     id: u.id,
     email: u.email ?? '',
+    username: profileMap[u.id]?.username ?? '',
     created_at: u.created_at,
     team_name: profileMap[u.id]?.team_name ?? '',
     last_active_at: profileMap[u.id]?.last_active_at ?? null,

@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 type User = {
   id: string
   email: string
+  username: string
   created_at: string
   team_name: string
   last_active_at: string | null
@@ -197,8 +198,11 @@ export default function AdminPage() {
             <div key={u.id} className="bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 flex flex-col gap-2">
               <div className="flex items-start justify-between gap-2">
                 <button className="flex-1 min-w-0 text-left" onClick={() => router.push(`/admin/users/${u.id}`)}>
-                  <p className="text-white text-sm font-medium truncate">{u.email}</p>
-                  <p className="text-gray-500 text-xs">{u.team_name || '—'}</p>
+                  <p className="text-white text-sm font-medium truncate">
+                    {u.username ? `@${u.username}` : u.email}
+                  </p>
+                  <p className="text-gray-500 text-xs truncate">{u.email}</p>
+                  {u.team_name && <p className="text-gray-600 text-xs">{u.team_name}</p>}
                 </button>
                 <button
                   onClick={() => setDeleteTarget(u)}

@@ -151,16 +151,21 @@ export default function HelpPage() {
             </button>
             {openIndex === i && (
               <ul className={`px-4 pb-4 flex flex-col gap-2 border-t ${s.warning ? 'border-rose-800/50' : 'border-violet-800/40'}`}>
-                {s.content.map((line, j) => (
-                  <li key={j} className="flex gap-2 pt-2">
-                    <span className={`mt-0.5 shrink-0 ${s.warning ? 'text-rose-500' : 'text-violet-400'}`}>
-                      <svg className="w-3.5 h-3.5 mt-0.5" viewBox="0 0 24 24" fill="currentColor">
-                        <circle cx="12" cy="12" r="4" />
-                      </svg>
-                    </span>
-                    <span className={`text-sm leading-relaxed ${s.warning ? 'text-rose-200' : 'text-violet-200'}`}>{line}</span>
-                  </li>
-                ))}
+                {s.content.map((line, j) => {
+                  const noBullet = /^[①②③④⑤⑥⑦⑧⑨⑩【]/.test(line)
+                  return (
+                    <li key={j} className={`flex gap-2 pt-2 ${noBullet ? 'items-start' : ''}`}>
+                      {!noBullet && (
+                        <span className={`mt-0.5 shrink-0 ${s.warning ? 'text-rose-500' : 'text-violet-400'}`}>
+                          <svg className="w-3.5 h-3.5 mt-0.5" viewBox="0 0 24 24" fill="currentColor">
+                            <circle cx="12" cy="12" r="4" />
+                          </svg>
+                        </span>
+                      )}
+                      <span className={`text-sm leading-relaxed ${noBullet ? 'pl-0' : ''} ${s.warning ? 'text-rose-200' : 'text-violet-200'}`}>{line}</span>
+                    </li>
+                  )
+                })}
               </ul>
             )}
           </div>
