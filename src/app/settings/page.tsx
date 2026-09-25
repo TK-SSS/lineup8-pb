@@ -18,17 +18,21 @@ export default function SettingsPage() {
 
   useEffect(() => {
     setCurrentTheme(getSavedTheme())
-    setIsAdmin(document.cookie.includes('lineup8-admin=ok'))
     async function load() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return
       setEmail(session.user.email ?? '')
-      const res = await fetch(`/api/auth?userId=${session.user.id}`)
-      const json = await res.json()
+      const [authRes, adminRes] = await Promise.all([
+        fetch(`/api/auth?userId=${session.user.id}`),
+        fetch(`/api/admin/check?userId=${session.user.id}`),
+      ])
+      const json = await authRes.json()
       if (json.team_name !== undefined) {
         setTeamName(json.team_name)
         setTeamNameDraft(json.team_name)
       }
+      const adminJson = await adminRes.json()
+      setIsAdmin(adminJson.admin === true)
     }
     load()
   }, [])

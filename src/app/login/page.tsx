@@ -24,13 +24,17 @@ export default function LoginPage() {
     if (mode === 'login') {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) { setError('メールアドレスまたはパスワードが違います'); setLoading(false); return }
+      const { data: { user } } = await supabase.auth.getUser()
       document.cookie = 'lineup8-auth=ok; path=/; max-age=2592000; SameSite=Lax'
-      if (email.toLowerCase() === process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase()) {
-        document.cookie = 'lineup8-admin=ok; path=/; max-age=2592000; SameSite=Lax'
-        router.push('/admin')
-      } else {
-        router.push('/')
+      if (user) {
+        const res = await fetch(`/api/admin/check?userId=${user.id}`)
+        const json = await res.json()
+        if (json.admin) {
+          router.push('/admin')
+          return
+        }
       }
+      router.push('/')
 
     } else if (mode === 'signup') {
       // signUp でユーザー作成＆確認メール送信
