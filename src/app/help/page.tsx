@@ -2,7 +2,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-const sections = [
+type Section = { title: string; content: string[]; warning?: boolean }
+
+const sections: Section[] = [
   {
     title: '基本の使い方',
     content: [
@@ -43,15 +45,23 @@ const sections = [
     ],
   },
   {
-    title: 'データの保存・ログイン',
+    title: 'データの保存',
     content: [
       'データはサーバーに自動保存されます。',
       '複数のデバイスで同じアカウントを使えます。',
       'オフライン時は端末内に一時保存し、オンライン復帰時に同期します。',
-      '30日間操作がない場合は自動的にログアウトされます。',
-      '6ヶ月間ログインがないアカウントは自動的に削除されます。',
       'チーム名は設定画面から変更できます。',
     ],
+  },
+  {
+    title: 'ログアウト・アカウント削除',
+    content: [
+      '30日間アプリを使用しない場合、自動的にログアウトされます。',
+      '6ヶ月間アクセスがないアカウントは自動的に削除されます。',
+      '削除されたアカウントのデータは復元できません。',
+      '継続してご利用の場合は定期的にアプリを開いてください。',
+    ],
+    warning: true,
   },
   {
     title: 'テーマカラー',
@@ -83,14 +93,22 @@ export default function HelpPage() {
 
       <div className="px-4 flex flex-col gap-2">
         {sections.map((s, i) => (
-          <div key={i} className="bg-violet-950/50 border border-violet-800/40 rounded-xl overflow-hidden">
+          <div key={i} className={`border rounded-xl overflow-hidden ${s.warning ? 'bg-rose-950/40 border-rose-800/50' : 'bg-violet-950/50 border-violet-800/40'}`}>
             <button
               className="w-full flex items-center justify-between px-4 py-4 text-left"
               onClick={() => setOpenIndex(openIndex === i ? null : i)}
             >
-              <span className="font-semibold text-white text-sm">{s.title}</span>
+              <span className={`font-semibold text-sm flex items-center gap-2 ${s.warning ? 'text-rose-300' : 'text-white'}`}>
+                {s.warning && (
+                  <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                    <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+                  </svg>
+                )}
+                {s.title}
+              </span>
               <svg
-                className="w-4 h-4 text-violet-400 shrink-0 transition-transform duration-200"
+                className={`w-4 h-4 shrink-0 transition-transform duration-200 ${s.warning ? 'text-rose-500' : 'text-violet-400'}`}
                 style={{ transform: openIndex === i ? 'rotate(180deg)' : 'rotate(0deg)' }}
                 viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"
               >
@@ -98,15 +116,15 @@ export default function HelpPage() {
               </svg>
             </button>
             {openIndex === i && (
-              <ul className="px-4 pb-4 flex flex-col gap-2 border-t border-violet-800/40">
+              <ul className={`px-4 pb-4 flex flex-col gap-2 border-t ${s.warning ? 'border-rose-800/50' : 'border-violet-800/40'}`}>
                 {s.content.map((line, j) => (
                   <li key={j} className="flex gap-2 pt-2">
-                    <span className="text-violet-400 mt-0.5 shrink-0">
+                    <span className={`mt-0.5 shrink-0 ${s.warning ? 'text-rose-500' : 'text-violet-400'}`}>
                       <svg className="w-3.5 h-3.5 mt-0.5" viewBox="0 0 24 24" fill="currentColor">
                         <circle cx="12" cy="12" r="4" />
                       </svg>
                     </span>
-                    <span className="text-violet-200 text-sm leading-relaxed">{line}</span>
+                    <span className={`text-sm leading-relaxed ${s.warning ? 'text-rose-200' : 'text-violet-200'}`}>{line}</span>
                   </li>
                 ))}
               </ul>
