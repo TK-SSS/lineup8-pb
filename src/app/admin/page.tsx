@@ -11,12 +11,13 @@ type User = {
   last_active_at: string | null
 }
 
-function daysSince(dateStr: string | null): number {
-  if (!dateStr) return 9999
+function daysSince(dateStr: string | null): number | null {
+  if (!dateStr) return null
   return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000)
 }
 
-function activityBadge(days: number) {
+function activityBadge(days: number | null) {
+  if (days === null) return { label: '未計測', color: '#6d28d9', bg: '#ede9fe' }
   if (days <= 30) return { label: 'アクティブ', color: '#059669', bg: '#d1fae5' }
   if (days <= 90) return { label: `${days}日前`, color: '#d97706', bg: '#fef3c7' }
   if (days <= 180) return { label: `${days}日前`, color: '#dc2626', bg: '#fee2e2' }
@@ -41,7 +42,7 @@ export default function AdminPage() {
         .then(r => r.json())
         .then(json => {
           if (json.error) { setError(json.error); return }
-          setUsers(json.users)
+          setUsers((json.users as User[]).filter(u => u.email !== session.user.email))
         })
         .catch(() => setError('取得に失敗しました'))
         .finally(() => setLoading(false))
@@ -66,8 +67,8 @@ export default function AdminPage() {
     u.email.includes(search) || u.team_name.includes(search)
   )
 
-  const activeCount = users.filter(u => daysSince(u.last_active_at) <= 30).length
-  const pendingDelete = users.filter(u => daysSince(u.last_active_at) > 150).length
+  const activeCount = users.filter(u => { const d = daysSince(u.last_active_at); return d !== null && d <= 30 }).length
+  const pendingDelete = users.filter(u => { const d = daysSince(u.last_active_at); return d !== null && d > 150 }).length
 
   return (
     <div className="min-h-screen bg-black text-white pb-8">
@@ -113,7 +114,7 @@ export default function AdminPage() {
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   <p className="text-white text-sm font-medium truncate">{u.email}</p>
-                  <p className="text-violet-400 text-xs">{u.team_name || '（チーム名なし）'}</p>
+                  <p className="text-violet-400 text-xs">{u.team_name || '—'}</p>
                 </div>
                 <button
                   onClick={() => setDeleteTarget(u)}
