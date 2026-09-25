@@ -175,16 +175,6 @@ export default function SettingsPage() {
         </Link>
       )}
 
-      {/* プライバシーポリシー・利用規約 */}
-      <div className="flex gap-2 mb-3">
-        <Link href="/privacy" className="flex-1 flex items-center justify-center gap-2 px-3 py-3 bg-violet-950/50 border border-violet-800/40 rounded-xl text-violet-400 text-xs hover:bg-violet-900/30 transition-colors">
-          プライバシーポリシー
-        </Link>
-        <Link href="/terms" className="flex-1 flex items-center justify-center gap-2 px-3 py-3 bg-violet-950/50 border border-violet-800/40 rounded-xl text-violet-400 text-xs hover:bg-violet-900/30 transition-colors">
-          利用規約
-        </Link>
-      </div>
-
       {/* 使い方 */}
       <Link
         href="/help"
@@ -255,10 +245,14 @@ export default function SettingsPage() {
         )}
       </div>
 
-      {/* バージョン・著作権 */}
-      <div className="mt-6 mb-2 text-center">
-        <p className="text-violet-700 text-xs">LineUp 8 v1.0.0</p>
-        <p className="text-violet-800 text-xs mt-1">© 2026 LineUp 8</p>
+      {/* プライバシーポリシー・利用規約 */}
+      <div className="flex gap-2 mt-3 mb-3">
+        <Link href="/privacy" className="flex-1 flex items-center justify-center px-3 py-3 bg-violet-950/50 border border-violet-800/40 rounded-xl text-violet-400 text-xs hover:bg-violet-900/30 transition-colors">
+          プライバシーポリシー
+        </Link>
+        <Link href="/terms" className="flex-1 flex items-center justify-center px-3 py-3 bg-violet-950/50 border border-violet-800/40 rounded-xl text-violet-400 text-xs hover:bg-violet-900/30 transition-colors">
+          利用規約
+        </Link>
       </div>
 
       {/* アカウント削除 */}
@@ -274,6 +268,12 @@ export default function SettingsPage() {
         </svg>
         アカウント削除
       </button>
+
+      {/* バージョン・著作権 */}
+      <div className="mt-6 mb-2 text-center">
+        <p className="text-violet-700 text-xs">LineUp 8 v1.0.0</p>
+        <p className="text-violet-800 text-xs mt-1">© 2026 LineUp 8</p>
+      </div>
 
       {/* 削除確認モーダル */}
       {showDeleteConfirm && (
