@@ -14,9 +14,11 @@ export default function SettingsPage() {
   const [message, setMessage] = useState('')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [currentTheme, setCurrentTheme] = useState<ThemeId>('violet')
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
     setCurrentTheme(getSavedTheme())
+    setIsAdmin(document.cookie.includes('lineup8-admin=ok'))
     async function load() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return
@@ -126,6 +128,22 @@ export default function SettingsPage() {
         <p className="text-violet-400 text-xs mb-1">メールアドレス</p>
         <p className="text-white text-sm">{email}</p>
       </div>
+
+      {/* 管理画面（管理者のみ） */}
+      {isAdmin && (
+        <Link
+          href="/admin"
+          className="w-full flex items-center gap-3 px-4 py-4 bg-violet-950/50 border border-violet-600/60 rounded-xl text-left text-violet-300 hover:bg-violet-900/30 transition-colors mb-3"
+        >
+          <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          </svg>
+          管理画面
+          <svg className="w-4 h-4 ml-auto text-violet-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 18l6-6-6-6" />
+          </svg>
+        </Link>
+      )}
 
       {/* 使い方 */}
       <Link
