@@ -25,6 +25,9 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) { setError('メールアドレスまたはパスワードが違います'); setLoading(false); return }
       document.cookie = 'lineup8-auth=ok; path=/; max-age=2592000; SameSite=Lax'
+      if (email.toLowerCase() === process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase()) {
+        document.cookie = 'lineup8-admin=ok; path=/; max-age=2592000; SameSite=Lax'
+      }
       router.push('/')
 
     } else if (mode === 'signup') {

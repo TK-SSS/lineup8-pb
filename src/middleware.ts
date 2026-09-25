@@ -20,6 +20,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
+  if (pathname.startsWith('/admin')) {
+    const adminCookie = request.cookies.get('lineup8-admin')?.value
+    if (adminCookie !== 'ok') {
+      return NextResponse.redirect(new URL('/', request.url))
+    }
+  }
+
   return NextResponse.next()
 }
 
