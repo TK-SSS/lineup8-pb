@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { THEMES, type ThemeId, applyTheme, getSavedTheme } from '@/lib/theme'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -11,8 +12,10 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [currentTheme, setCurrentTheme] = useState<ThemeId>('violet')
 
   useEffect(() => {
+    setCurrentTheme(getSavedTheme())
     async function load() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return
@@ -35,6 +38,11 @@ export default function SettingsPage() {
     const { error } = await supabase.from('profiles').upsert({ id: session.user.id, team_name: teamNameDraft.trim() }, { onConflict: 'id' })
     if (!error) { setTeamName(teamNameDraft.trim()); setMessage('保存しました') }
     setSaving(false)
+  }
+
+  function handleThemeChange(id: ThemeId) {
+    setCurrentTheme(id)
+    applyTheme(id)
   }
 
   async function handleLogout() {
@@ -76,6 +84,37 @@ export default function SettingsPage() {
         >
           {saving ? '保存中...' : '保存'}
         </button>
+      </div>
+
+      {/* テーマカラー */}
+      <div className="bg-violet-950/50 border border-violet-800/40 rounded-xl p-4 mb-3">
+        <p className="text-violet-400 text-xs mb-3">テーマカラー</p>
+        <div className="flex gap-3">
+          {THEMES.map(t => (
+            <button
+              key={t.id}
+              onClick={() => handleThemeChange(t.id as ThemeId)}
+              className="flex flex-col items-center gap-1.5"
+              title={t.label}
+            >
+              <span
+                className="w-9 h-9 rounded-full flex items-center justify-center transition-all"
+                style={{
+                  background: t.oklch,
+                  boxShadow: currentTheme === t.id ? `0 0 0 3px white` : 'none',
+                  outline: currentTheme === t.id ? '3px solid transparent' : 'none',
+                }}
+              >
+                {currentTheme === t.id && (
+                  <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                )}
+              </span>
+              <span className="text-xs text-violet-300">{t.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* メールアドレス */}

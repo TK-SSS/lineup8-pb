@@ -32,6 +32,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ja" className="h-full">
+      <head>
+        {/* Apply saved theme before first paint to prevent color flash */}
+        <script dangerouslySetInnerHTML={{ __html: `(function(){var t=localStorage.getItem('lineup8-theme');if(t)document.documentElement.setAttribute('data-theme',t)})()` }} />
+      </head>
       <body className="h-full flex flex-col bg-[#0d0a1f]">
         <ClientLayout>{children}</ClientLayout>
       </body>
