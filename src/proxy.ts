@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   // 日本からのアクセスのみ許可
   const country = request.headers.get('x-vercel-ip-country')
   if (country && country !== 'JP') {

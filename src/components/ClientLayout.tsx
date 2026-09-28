@@ -10,7 +10,7 @@ const UNAUTHED_PATHS = ['/login', '/privacy', '/terms', '/reset-password']
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
-  const showNav = pathname !== '/login' && !pathname.startsWith('/admin')
+  const showNav = pathname !== '/login' && !pathname.startsWith('/admin') && !pathname.startsWith('/reset-password') && !pathname.startsWith('/privacy') && !pathname.startsWith('/terms')
   const isPublic = UNAUTHED_PATHS.some(p => pathname.startsWith(p))
   const [authed, setAuthed] = useState(isPublic)
 
