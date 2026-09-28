@@ -12,17 +12,38 @@ export default function ResetPasswordPage() {
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    // getSession() handles the race condition where PASSWORD_RECOVERY
-    // fires before onAuthStateChange is registered
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setReady(true)
-    })
+    let unsubscribe: (() => void) | undefined
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') setReady(true)
-    })
+    async function init() {
+      // Primary: directly parse tokens from URL hash — most reliable, no event timing dependency
+      const hash = window.location.hash.substring(1)
+      const params = new URLSearchParams(hash)
+      const accessToken = params.get('access_token')
+      const refreshToken = params.get('refresh_token')
+      const type = params.get('type')
 
-    return () => subscription.unsubscribe()
+      if (accessToken && refreshToken && type === 'recovery') {
+        const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
+        if (!error) {
+          setReady(true)
+          window.history.replaceState(null, '', window.location.pathname)
+          return
+        }
+      }
+
+      // Fallback: already-established session (e.g. page reload)
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) { setReady(true); return }
+
+      // Last resort: wait for Supabase to fire the event asynchronously
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+        if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') setReady(true)
+      })
+      unsubscribe = () => subscription.unsubscribe()
+    }
+
+    init()
+    return () => unsubscribe?.()
   }, [])
 
   async function handleSubmit(e: React.FormEvent) {
@@ -35,7 +56,6 @@ export default function ResetPasswordPage() {
     const { error: updateError } = await supabase.auth.updateUser({ password })
     if (updateError) { setError('変更に失敗しました'); setLoading(false); return }
 
-    // Set httpOnly cookie via server (document.cookie lacks HttpOnly)
     const { data: { session } } = await supabase.auth.getSession()
     if (session) {
       await fetch('/api/auth/cookie', {
