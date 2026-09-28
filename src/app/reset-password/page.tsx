@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
@@ -35,38 +35,54 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [ready, setReady] = useState(false)
+  const [expired, setExpired] = useState(false)
   const [pwTouched, setPwTouched] = useState(false)
+  const readyRef = useRef(false)
 
   useEffect(() => {
-    let unsubscribe: (() => void) | undefined
-
-    async function init() {
-      const hash = window.location.hash.substring(1)
-      const params = new URLSearchParams(hash)
-      const accessToken = params.get('access_token')
-      const refreshToken = params.get('refresh_token')
-      const type = params.get('type')
-
-      if (accessToken && refreshToken && type === 'recovery') {
-        const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
-        if (!error) {
-          setReady(true)
-          window.history.replaceState(null, '', window.location.pathname)
-          return
-        }
-      }
-
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session) { setReady(true); return }
-
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-        if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') setReady(true)
-      })
-      unsubscribe = () => subscription.unsubscribe()
+    function markReady() {
+      if (readyRef.current) return
+      readyRef.current = true
+      setReady(true)
     }
 
-    init()
-    return () => unsubscribe?.()
+    // Detect if this page was opened from a recovery link (implicit flow: hash contains type=recovery)
+    const hash = window.location.hash.substring(1)
+    const hashParams = new URLSearchParams(hash)
+    const hashAccessToken = hashParams.get('access_token')
+    const hashRefreshToken = hashParams.get('refresh_token')
+    const isImplicitRecovery = hashParams.get('type') === 'recovery' && !!hashAccessToken
+
+    // Subscribe FIRST — before any session exchange
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        // PKCE flow: getSession() exchanges the code and fires this
+        markReady()
+      } else if (event === 'SIGNED_IN' && isImplicitRecovery) {
+        // Implicit flow: setSession() fires SIGNED_IN (not PASSWORD_RECOVERY)
+        markReady()
+      }
+    })
+
+    if (isImplicitRecovery && hashRefreshToken) {
+      // Implicit flow: exchange hash tokens (fires SIGNED_IN via subscription above)
+      supabase.auth.setSession({ access_token: hashAccessToken!, refresh_token: hashRefreshToken })
+        .then(({ error: e }) => { if (e) setExpired(true) })
+      window.history.replaceState(null, '', window.location.pathname)
+    } else {
+      // PKCE flow (or refresh): triggers code exchange, fires PASSWORD_RECOVERY
+      supabase.auth.getSession()
+    }
+
+    // After 6s with no success, show expired message
+    const timer = setTimeout(() => {
+      if (!readyRef.current) setExpired(true)
+    }, 6000)
+
+    return () => {
+      subscription.unsubscribe()
+      clearTimeout(timer)
+    }
   }, [])
 
   async function handleSubmit(e: React.FormEvent) {
@@ -77,7 +93,11 @@ export default function ResetPasswordPage() {
     setError('')
 
     const { error: updateError } = await supabase.auth.updateUser({ password })
-    if (updateError) { setError('変更に失敗しました'); setLoading(false); return }
+    if (updateError) {
+      setError(updateError.message || '変更に失敗しました')
+      setLoading(false)
+      return
+    }
 
     const { data: { session } } = await supabase.auth.getSession()
     if (session) {
@@ -98,7 +118,17 @@ export default function ResetPasswordPage() {
   return (
     <div style={{ minHeight: '100svh', background: '#0a0a1a', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
       <h1 style={{ color: 'white', fontWeight: 900, fontSize: 24, marginBottom: 8 }}>パスワード変更</h1>
-      {!ready ? (
+      {expired ? (
+        <div style={{ textAlign: 'center', marginTop: 24 }}>
+          <p style={{ color: '#f87171', fontSize: 14, marginBottom: 16 }}>リンクの有効期限が切れています</p>
+          <button
+            onClick={() => router.push('/login')}
+            style={{ padding: '12px 24px', borderRadius: 12, border: 'none', background: '#7c3aed', color: 'white', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}
+          >
+            ログイン画面に戻る
+          </button>
+        </div>
+      ) : !ready ? (
         <p style={{ color: '#7c3aed', fontSize: 14 }}>リンクを確認中...</p>
       ) : (
         <form onSubmit={handleSubmit} style={{ width: '100%', maxWidth: 340, display: 'flex', flexDirection: 'column', gap: 10, marginTop: 24 }}>
