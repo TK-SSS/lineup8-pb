@@ -1,20 +1,32 @@
 'use client'
-import { useEffect } from 'react'
-import { usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
 import BottomNav from './BottomNav'
 import { storage } from '@/lib/storage'
+import { supabase } from '@/lib/supabase'
 
 const UNAUTHED_PATHS = ['/login', '/privacy', '/terms', '/reset-password']
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const router = useRouter()
   const showNav = pathname !== '/login' && !pathname.startsWith('/admin')
+  const isPublic = UNAUTHED_PATHS.some(p => pathname.startsWith(p))
+  const [authed, setAuthed] = useState(isPublic)
 
   useEffect(() => {
-    if (!UNAUTHED_PATHS.some(p => pathname.startsWith(p))) {
-      storage.pingActivity()
-    }
-  }, [])
+    if (isPublic) return
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        router.replace('/login')
+      } else {
+        setAuthed(true)
+        storage.pingActivity()
+      }
+    })
+  }, [pathname])
+
+  if (!authed) return null
 
   return (
     <>
