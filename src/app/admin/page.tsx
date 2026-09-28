@@ -25,6 +25,50 @@ function activityBadge(days: number | null) {
   return { label: `${days}日前`, color: '#991b1b', bg: '#fca5a5' }
 }
 
+function ActivityChart({ days }: { days: { date: string; count: number }[] }) {
+  const max = Math.max(...days.map(d => d.count), 1)
+  const W = 560
+  const H = 100
+  const barW = Math.floor(W / days.length) - 1
+  const total = days.reduce((s, d) => s + d.count, 0)
+  const peak = Math.max(...days.map(d => d.count))
+
+  return (
+    <div>
+      <div className="flex justify-between text-xs text-gray-600 mb-1">
+        <span>合計: <span className="text-gray-400">{total}</span> セッション</span>
+        <span>ピーク: <span className="text-gray-400">{peak}</span> ユーザー/日</span>
+      </div>
+      <svg viewBox={`0 0 ${W} ${H + 20}`} className="w-full" style={{ height: 120 }}>
+        {days.map((d, i) => {
+          const barH = max > 0 ? Math.max((d.count / max) * H, d.count > 0 ? 3 : 0) : 0
+          const x = i * (barW + 1)
+          const showLabel = i === 0 || i === 14 || i === days.length - 1
+          const label = d.date.slice(5) // MM-DD
+          return (
+            <g key={d.date}>
+              <rect
+                x={x}
+                y={H - barH}
+                width={barW}
+                height={barH}
+                fill={d.count > 0 ? '#6366f1' : '#1f2937'}
+                rx={2}
+              />
+              {showLabel && (
+                <text x={x + barW / 2} y={H + 14} textAnchor="middle" fontSize={9} fill="#4b5563">
+                  {label}
+                </text>
+              )}
+            </g>
+          )
+        })}
+      </svg>
+      <p className="text-gray-600 text-xs text-center mt-1">日別アクティブユーザー数（JST）</p>
+    </div>
+  )
+}
+
 export default function AdminPage() {
   const router = useRouter()
   const [users, setUsers] = useState<User[]>([])
@@ -37,6 +81,9 @@ export default function AdminPage() {
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [feedbacks, setFeedbacks] = useState<{ id: string; email: string; message: string; read: boolean; created_at: string }[]>([])
   const [feedbackLoaded, setFeedbackLoaded] = useState(false)
+  const [activityOpen, setActivityOpen] = useState(false)
+  const [activityDays, setActivityDays] = useState<{ date: string; count: number }[]>([])
+  const [activityLoaded, setActivityLoaded] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -52,6 +99,16 @@ export default function AdminPage() {
         .finally(() => setLoading(false))
     })
   }, [router])
+
+  function toggleActivity() {
+    if (!activityOpen && !activityLoaded && userId) {
+      fetch(`/api/admin/activity?userId=${userId}`)
+        .then(r => r.json())
+        .then(json => { if (json.days) setActivityDays(json.days) })
+        .finally(() => setActivityLoaded(true))
+    }
+    setActivityOpen(o => !o)
+  }
 
   async function getToken(): Promise<string | null> {
     const { data: { session } } = await supabase.auth.getSession()
@@ -163,6 +220,35 @@ export default function AdminPage() {
                   )}
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+
+        {/* Activity log chart */}
+        <div className="bg-gray-900 border border-gray-700 rounded-xl overflow-hidden">
+          <button
+            onClick={toggleActivity}
+            className="w-full flex items-center justify-between px-4 py-3 text-left"
+          >
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+              </svg>
+              <span className="text-white text-sm">アクセスログ（過去30日）</span>
+            </div>
+            <svg
+              className="w-4 h-4 text-gray-500 transition-transform duration-200"
+              style={{ transform: activityOpen ? 'rotate(90deg)' : 'rotate(0deg)' }}
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+            >
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          </button>
+
+          {activityOpen && (
+            <div className="border-t border-gray-700 px-4 pb-4 pt-3">
+              {!activityLoaded && <p className="text-gray-500 text-sm text-center py-4">読み込み中...</p>}
+              {activityLoaded && <ActivityChart days={activityDays} />}
             </div>
           )}
         </div>

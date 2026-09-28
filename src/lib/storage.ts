@@ -61,6 +61,7 @@ async function pingActivity(): Promise<void> {
     .from('profiles')
     .update({ last_active_at: new Date().toISOString() })
     .eq('id', userId)
+  supabase.from('activity_logs').insert({ user_id: userId }).then(() => {})
 }
 
 export const storage = {
