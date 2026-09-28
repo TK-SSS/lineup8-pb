@@ -31,6 +31,7 @@ export default function SettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordSaving, setPasswordSaving] = useState(false)
   const [passwordMessage, setPasswordMessage] = useState('')
+  const [pwTouched, setPwTouched] = useState(false)
 
   useEffect(() => {
     setCurrentTheme(getSavedTheme())
@@ -92,9 +93,15 @@ export default function SettingsPage() {
     applyTheme(id)
   }
 
+  const PASSWORD_POLICY = [
+    { label: '8文字以上', test: (p: string) => p.length >= 8 },
+    { label: '英字を含む', test: (p: string) => /[a-zA-Z]/.test(p) },
+    { label: '数字を含む', test: (p: string) => /[0-9]/.test(p) },
+  ]
+
   async function handlePasswordChange() {
+    if (!PASSWORD_POLICY.every(r => r.test(newPassword))) { setPasswordMessage('パスワードポリシーを満たしていません'); return }
     if (newPassword !== confirmPassword) { setPasswordMessage('パスワードが一致しません'); return }
-    if (newPassword.length < 8) { setPasswordMessage('8文字以上で入力してください'); return }
     setPasswordSaving(true)
     setPasswordMessage('')
     const { error } = await supabase.auth.updateUser({ password: newPassword })
@@ -343,25 +350,43 @@ export default function SettingsPage() {
             <input
               type="password"
               value={newPassword}
-              onChange={e => setNewPassword(e.target.value)}
-              placeholder="新しいパスワード（8文字以上）"
+              onChange={e => { setNewPassword(e.target.value); setPwTouched(true) }}
+              placeholder="新しいパスワード"
               className="w-full bg-transparent text-white text-sm outline-none border border-violet-700 rounded-lg p-3 placeholder-violet-600"
+              style={{ fontSize: 16 }}
             />
+            {pwTouched && (
+              <div className="flex flex-col gap-1 px-1">
+                {PASSWORD_POLICY.map(r => {
+                  const ok = r.test(newPassword)
+                  return (
+                    <div key={r.label} className="flex items-center gap-1.5 text-xs">
+                      <span className={ok ? 'text-emerald-400' : 'text-gray-600'}>{ok ? '✓' : '✗'}</span>
+                      <span className={ok ? 'text-emerald-400' : 'text-violet-600'}>{r.label}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
             <input
               type="password"
               value={confirmPassword}
               onChange={e => setConfirmPassword(e.target.value)}
               placeholder="確認（再入力）"
               className="w-full bg-transparent text-white text-sm outline-none border border-violet-700 rounded-lg p-3 placeholder-violet-600"
+              style={{ fontSize: 16 }}
             />
+            {confirmPassword && newPassword !== confirmPassword && (
+              <p className="text-red-400 text-xs pl-1">パスワードが一致しません</p>
+            )}
             {passwordMessage && (
-              <p className={`text-xs ${passwordMessage.includes('失敗') || passwordMessage.includes('一致') || passwordMessage.includes('8文字') ? 'text-red-400' : 'text-emerald-400'}`}>
+              <p className={`text-xs ${passwordMessage.includes('失敗') || passwordMessage.includes('一致') || passwordMessage.includes('ポリシー') ? 'text-red-400' : 'text-emerald-400'}`}>
                 {passwordMessage}
               </p>
             )}
             <button
               onClick={handlePasswordChange}
-              disabled={passwordSaving || !newPassword || newPassword !== confirmPassword}
+              disabled={passwordSaving || !PASSWORD_POLICY.every(r => r.test(newPassword)) || newPassword !== confirmPassword}
               className="text-sm text-violet-300 border border-violet-600 rounded-lg px-4 py-1.5 disabled:opacity-40 self-start"
             >
               {passwordSaving ? '変更中...' : '変更する'}
