@@ -2,11 +2,10 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
 async function verifyAdmin(request: Request): Promise<boolean> {
-  const { searchParams } = new URL(request.url)
-  const userId = searchParams.get('userId')
-  if (!userId) return false
-  const { data } = await supabaseAdmin.auth.admin.getUserById(userId)
-  return data?.user?.email === process.env.ADMIN_EMAIL
+  const token = request.headers.get('Authorization')?.replace('Bearer ', '')
+  if (!token) return false
+  const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
+  return !error && user?.email === process.env.ADMIN_EMAIL
 }
 
 export async function GET(request: Request) {
@@ -25,7 +24,6 @@ export async function GET(request: Request) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Group by JST date, count distinct users per day
   const dayMap: Record<string, Set<string>> = {}
   for (const row of data ?? []) {
     const jst = new Date(new Date(row.created_at).getTime() + 9 * 3600 * 1000)

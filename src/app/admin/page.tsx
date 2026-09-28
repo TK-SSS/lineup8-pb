@@ -89,7 +89,8 @@ export default function AdminPage() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) { router.push('/login'); return }
       setUserId(session.user.id)
-      fetch(`/api/admin/users?userId=${session.user.id}`)
+      const token = session.access_token
+      fetch('/api/admin/users', { headers: { 'Authorization': `Bearer ${token}` } })
         .then(r => r.json())
         .then(json => {
           if (json.error) { setError(json.error); return }
@@ -101,11 +102,14 @@ export default function AdminPage() {
   }, [router])
 
   function toggleActivity() {
-    if (!activityOpen && !activityLoaded && userId) {
-      fetch(`/api/admin/activity?userId=${userId}`)
-        .then(r => r.json())
-        .then(json => { if (json.days) setActivityDays(json.days) })
-        .finally(() => setActivityLoaded(true))
+    if (!activityOpen && !activityLoaded) {
+      getToken().then(token => {
+        if (!token) return
+        fetch('/api/admin/activity', { headers: { 'Authorization': `Bearer ${token}` } })
+          .then(r => r.json())
+          .then(json => { if (json.days) setActivityDays(json.days) })
+          .finally(() => setActivityLoaded(true))
+      })
     }
     setActivityOpen(o => !o)
   }
@@ -140,9 +144,13 @@ export default function AdminPage() {
   }
 
   async function handleDelete() {
-    if (!deleteTarget || !userId) return
+    if (!deleteTarget) return
     setDeleting(true)
-    const res = await fetch(`/api/admin/users?userId=${userId}&targetId=${deleteTarget.id}`, { method: 'DELETE' })
+    const token = await getToken()
+    const res = await fetch(`/api/admin/users?targetId=${deleteTarget.id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token ?? ''}` },
+    })
     const json = await res.json()
     if (json.ok) {
       setUsers(u => u.filter(x => x.id !== deleteTarget.id))

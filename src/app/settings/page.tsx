@@ -39,9 +39,10 @@ export default function SettingsPage() {
       if (!session) return
       setEmail(session.user.email ?? '')
       setUserId(session.user.id)
+      const token = session.access_token
       const [authRes, adminRes] = await Promise.all([
-        fetch(`/api/auth?userId=${session.user.id}`),
-        fetch(`/api/admin/check?userId=${session.user.id}`),
+        fetch('/api/auth', { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch('/api/admin/check', { headers: { 'Authorization': `Bearer ${token}` } }),
       ])
       const json = await authRes.json()
       if (json.team_name !== undefined) {
@@ -174,6 +175,7 @@ export default function SettingsPage() {
       },
       body: JSON.stringify({ action: 'delete', userId: session.user.id }),
     })
+    await supabase.auth.signOut()
     await fetch('/api/auth/cookie', { method: 'DELETE' })
     router.push('/login')
   }

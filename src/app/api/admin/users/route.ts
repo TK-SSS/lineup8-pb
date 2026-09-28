@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
-async function verifyAdmin(request: Request): Promise<boolean> {
-  const { searchParams } = new URL(request.url)
-  const userId = searchParams.get('userId')
-  if (!userId) return false
-  const { data } = await supabaseAdmin.auth.admin.getUserById(userId)
-  return data?.user?.email === process.env.ADMIN_EMAIL
+async function verifyAdmin(request: Request): Promise<string | null> {
+  const token = request.headers.get('Authorization')?.replace('Bearer ', '')
+  if (!token) return null
+  const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
+  if (error || !user || user.email !== process.env.ADMIN_EMAIL) return null
+  return user.id
 }
 
 export async function GET(request: Request) {
@@ -36,13 +36,15 @@ export async function GET(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  if (!(await verifyAdmin(request))) {
+  const adminId = await verifyAdmin(request)
+  if (!adminId) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 
   const { searchParams } = new URL(request.url)
   const targetId = searchParams.get('targetId')
   if (!targetId) return NextResponse.json({ error: 'targetId required' }, { status: 400 })
+  if (targetId === adminId) return NextResponse.json({ error: 'cannot delete own account' }, { status: 400 })
 
   const { error } = await supabaseAdmin.auth.admin.deleteUser(targetId)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

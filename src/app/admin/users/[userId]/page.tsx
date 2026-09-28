@@ -20,7 +20,9 @@ export default function UserDetailPage() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) { router.push('/login'); return }
-      fetch(`/api/admin/userdata?adminId=${session.user.id}&targetId=${userId}`)
+      fetch(`/api/admin/userdata?targetId=${userId}`, {
+          headers: { 'Authorization': `Bearer ${session.access_token}` },
+        })
         .then(r => r.json())
         .then(json => {
           if (json.error) { router.push('/admin'); return }

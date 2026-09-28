@@ -1,18 +1,19 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
-async function verifyAdmin(userId: string): Promise<boolean> {
-  const { data } = await supabaseAdmin.auth.admin.getUserById(userId)
-  return data?.user?.email === process.env.ADMIN_EMAIL
+async function verifyAdmin(request: Request): Promise<boolean> {
+  const token = request.headers.get('Authorization')?.replace('Bearer ', '')
+  if (!token) return false
+  const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
+  return !error && user?.email === process.env.ADMIN_EMAIL
 }
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
-  const adminId = searchParams.get('adminId')
   const targetId = searchParams.get('targetId')
 
-  if (!adminId || !targetId) return NextResponse.json({ error: 'params required' }, { status: 400 })
-  if (!(await verifyAdmin(adminId))) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  if (!targetId) return NextResponse.json({ error: 'params required' }, { status: 400 })
+  if (!(await verifyAdmin(request))) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
   const [{ data: targetUser }, { data: appData }, { data: profile }] = await Promise.all([
     supabaseAdmin.auth.admin.getUserById(targetId),
