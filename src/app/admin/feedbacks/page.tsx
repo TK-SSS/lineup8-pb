@@ -15,14 +15,15 @@ export default function FeedbacksPage() {
   const router = useRouter()
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([])
   const [loading, setLoading] = useState(true)
-  const [userId, setUserId] = useState('')
+  const [token, setToken] = useState('')
   const [filter, setFilter] = useState<'all' | 'unread'>('unread')
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) { router.push('/login'); return }
-      setUserId(session.user.id)
-      fetch(`/api/feedback?adminId=${session.user.id}`)
+      const t = session.access_token
+      setToken(t)
+      fetch('/api/feedback', { headers: { 'Authorization': `Bearer ${t}` } })
         .then(r => r.json())
         .then(json => {
           if (json.error) { router.push('/admin'); return }
@@ -35,8 +36,8 @@ export default function FeedbacksPage() {
   async function markRead(id: string) {
     await fetch('/api/feedback', {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminId: userId, id }),
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ id }),
     })
     setFeedbacks(f => f.map(x => x.id === id ? { ...x, read: true } : x))
   }

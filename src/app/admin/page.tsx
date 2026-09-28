@@ -261,6 +261,16 @@ export default function AdminPage() {
           )}
         </div>
 
+        {error && (
+          <div className="bg-red-950/60 border border-red-700 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+            <p className="text-red-400 text-sm">{error}</p>
+            <button
+              onClick={() => { setError(''); setLoading(true); supabase.auth.getSession().then(({ data: { session } }) => { if (!session) return; fetch('/api/admin/users', { headers: { 'Authorization': `Bearer ${session.access_token}` } }).then(r => r.json()).then(json => { if (json.error) { setError(json.error); return } setUsers((json.users as User[]).filter(u => u.email !== session.user.email)) }).catch(() => setError('取得に失敗しました')).finally(() => setLoading(false)) }) }}
+              className="text-red-300 text-xs border border-red-700 rounded-lg px-3 py-1 shrink-0"
+            >再試行</button>
+          </div>
+        )}
+
         <div className="grid grid-cols-3 gap-3">
           {[
             { label: '総ユーザー', value: users.length, color: 'text-white' },
