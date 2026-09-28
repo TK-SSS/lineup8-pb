@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
+const USERNAME_RE = /^[a-z0-9_]{3,20}$/
+
 export async function GET(request: Request) {
   const token = request.headers.get('Authorization')?.replace('Bearer ', '')
   if (!token) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
@@ -18,9 +20,30 @@ export async function POST(request: Request) {
     const { userId, teamName, username } = body
     if (!userId) return NextResponse.json({ error: 'userId required' }, { status: 400 })
 
-    // Verify the userId is a real user
-    const { data: userCheck } = await supabaseAdmin.auth.admin.getUserById(userId)
-    if (!userCheck?.user) return NextResponse.json({ error: 'invalid userId' }, { status: 400 })
+    const token = request.headers.get('Authorization')?.replace('Bearer ', '')
+    if (token) {
+      // Session available (email confirmation disabled or already confirmed): verify token owner
+      const { data: { user: caller }, error: authErr } = await supabaseAdmin.auth.getUser(token)
+      if (authErr || !caller || caller.id !== userId) {
+        return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+      }
+    } else {
+      // No session (email confirmation required): allow only if the user was created within 5 minutes
+      const { data: userCheck } = await supabaseAdmin.auth.admin.getUserById(userId)
+      if (!userCheck?.user) return NextResponse.json({ error: 'invalid userId' }, { status: 400 })
+      const createdAt = new Date(userCheck.user.created_at).getTime()
+      if (Date.now() - createdAt > 5 * 60 * 1000) {
+        return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+      }
+    }
+
+    // Validate username format
+    if (username?.trim()) {
+      const uname = username.trim().toLowerCase()
+      if (!USERNAME_RE.test(uname)) {
+        return NextResponse.json({ error: 'ユーザー名は半角英数字・アンダースコアのみ、3〜20文字で入力してください' }, { status: 400 })
+      }
+    }
 
     // Only insert — never overwrite an existing profile
     const { data: existing } = await supabaseAdmin.from('profiles').select('id').eq('id', userId).single()
@@ -45,6 +68,23 @@ export async function POST(request: Request) {
       .eq('username', username.trim().toLowerCase())
       .single()
     return NextResponse.json({ available: !data })
+  }
+
+  if (action === 'update-username') {
+    const token = request.headers.get('Authorization')?.replace('Bearer ', '')
+    if (!token) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+    const { data: { user: caller }, error: authErr } = await supabaseAdmin.auth.getUser(token)
+    if (authErr || !caller) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+
+    const { username } = body
+    const uname = username?.trim().toLowerCase() ?? ''
+    if (!USERNAME_RE.test(uname)) {
+      return NextResponse.json({ error: 'ユーザー名は半角英数字・アンダースコアのみ、3〜20文字で入力してください' }, { status: 400 })
+    }
+    const { error } = await supabaseAdmin.from('profiles').upsert({ id: caller.id, username: uname }, { onConflict: 'id' })
+    if (error?.code === '23505') return NextResponse.json({ error: 'このユーザー名は使用されています' }, { status: 409 })
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true })
   }
 
   if (action === 'delete') {

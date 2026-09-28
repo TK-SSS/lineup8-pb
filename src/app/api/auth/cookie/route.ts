@@ -21,7 +21,14 @@ export async function POST(request: Request) {
   return res
 }
 
-export async function DELETE() {
+export async function DELETE(request: Request) {
+  const token = request.headers.get('Authorization')?.replace('Bearer ', '')
+  if (token) {
+    const { error } = await supabaseAdmin.auth.getUser(token)
+    if (error) return NextResponse.json({ error: 'invalid token' }, { status: 401 })
+  } else {
+    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  }
   const res = NextResponse.json({ ok: true })
   res.cookies.set('lineup8-auth', '', { ...COOKIE_OPTS, maxAge: 0 })
   res.cookies.set('lineup8-admin', '', { ...COOKIE_OPTS, maxAge: 0 })

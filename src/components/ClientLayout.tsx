@@ -15,7 +15,11 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const [authed, setAuthed] = useState(isPublic)
 
   useEffect(() => {
-    if (isPublic) return
+    if (isPublic) {
+      setAuthed(true)
+      return
+    }
+    setAuthed(false)
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
         router.replace('/login')

@@ -65,14 +65,16 @@ export default function SettingsPage() {
     setUsernameMessage('')
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) return
-    const val = usernameDraft.trim().toLowerCase()
-    const { error } = await supabase
-      .from('profiles')
-      .upsert({ id: session.user.id, username: val }, { onConflict: 'id' })
-    if (error) {
-      setUsernameMessage(error.code === '23505' ? 'このユーザー名は使用されています' : '保存に失敗しました')
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+      body: JSON.stringify({ action: 'update-username', username: usernameDraft }),
+    })
+    const json = await res.json()
+    if (!res.ok) {
+      setUsernameMessage(json.error || '保存に失敗しました')
     } else {
-      setUsername(val)
+      setUsername(usernameDraft.trim().toLowerCase())
       setUsernameMessage('保存しました')
     }
     setUsernameSaving(false)
@@ -166,8 +168,14 @@ export default function SettingsPage() {
   }
 
   async function handleLogout() {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session) {
+      await fetch('/api/auth/cookie', {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+      })
+    }
     await supabase.auth.signOut()
-    await fetch('/api/auth/cookie', { method: 'DELETE' })
     router.push('/login')
   }
 
@@ -182,8 +190,11 @@ export default function SettingsPage() {
       },
       body: JSON.stringify({ action: 'delete', userId: session.user.id }),
     })
+    await fetch('/api/auth/cookie', {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${session.access_token}` },
+    })
     await supabase.auth.signOut()
-    await fetch('/api/auth/cookie', { method: 'DELETE' })
     router.push('/login')
   }
 
