@@ -7,6 +7,30 @@ type Mode = 'login' | 'signup' | 'forgot'
 
 const USERNAME_RE = /^[a-z0-9_]{3,20}$/
 
+const PASSWORD_POLICY = [
+  { label: '8文字以上', test: (p: string) => p.length >= 8 },
+  { label: '英字を含む', test: (p: string) => /[a-zA-Z]/.test(p) },
+  { label: '数字を含む', test: (p: string) => /[0-9]/.test(p) },
+]
+
+function policyValid(p: string) { return PASSWORD_POLICY.every(r => r.test(p)) }
+
+function PasswordPolicyHint({ password, show }: { password: string; show: boolean }) {
+  if (!show) return null
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '8px 12px', background: '#0d0d1f', borderRadius: 10, border: '1px solid #2d1b69' }}>
+      {PASSWORD_POLICY.map(r => {
+        const ok = r.test(password)
+        return (
+          <span key={r.label} style={{ fontSize: 12, color: ok ? '#34d399' : '#6b7280', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span>{ok ? '✓' : '○'}</span>{r.label}
+          </span>
+        )
+      })}
+    </div>
+  )
+}
+
 function toJapaneseError(msg: string): string {
   if (/already registered|already been registered|already exists/i.test(msg))
     return 'このメールアドレスはすでに登録されています'
@@ -31,8 +55,10 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
+  const [pwTouched, setPwTouched] = useState(false)
 
   function switchMode(m: Mode) {
+    setPwTouched(false)
     setMode(m)
     setError('')
     setMessage('')
@@ -63,8 +89,8 @@ export default function LoginPage() {
         setError('ユーザー名は半角英数字・アンダースコアのみ、3〜20文字で入力してください')
         setLoading(false); return
       }
-      if (password.length < 8) {
-        setError('パスワードは8文字以上で入力してください')
+      if (!policyValid(password)) {
+        setError('パスワードは8文字以上で英字・数字を含めてください')
         setLoading(false); return
       }
       if (password !== confirmPassword) {
@@ -151,10 +177,13 @@ export default function LoginPage() {
           <input type="email" placeholder="メールアドレス" value={email} onChange={e => setEmail(e.target.value)} required style={input} />
         )}
         {mode !== 'forgot' && (
-          <input type="password" placeholder="パスワード" value={password} onChange={e => setPassword(e.target.value)} required style={input} />
+          <input type="password" placeholder="パスワード" value={password} onChange={e => { setPassword(e.target.value); if (mode === 'signup') setPwTouched(true) }} required style={input} />
         )}
         {mode === 'signup' && (
-          <input type="password" placeholder="パスワード（確認）" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required style={input} />
+          <>
+            <PasswordPolicyHint password={password} show={pwTouched} />
+            <input type="password" placeholder="パスワード（確認）" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required style={input} />
+          </>
         )}
 
         {error && <p style={{ color: '#f87171', fontSize: 13, textAlign: 'center' }}>{error}</p>}

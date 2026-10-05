@@ -38,6 +38,7 @@ export function useMatches() {
 
   useEffect(() => {
     if (!loadComplete.current) return
+    if (!hasLocalChanges.current) return
     const t = setTimeout(() => storage.saveMatches(matches), 400)
     return () => clearTimeout(t)
   }, [matches])

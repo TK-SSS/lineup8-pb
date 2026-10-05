@@ -14,9 +14,7 @@ export default function HomePage() {
   const { getLineup, setPlayer, swapPositions, copyLineup, clearLineup } = useAllLineups()
 
   const [currentIndex, setCurrentIndex] = useState<number>(-1)
-  const [teamName, setTeamName] = useState(() =>
-    typeof window !== 'undefined' ? (localStorage.getItem('lineup8-team-name') ?? '') : ''
-  )
+  const [teamName, setTeamName] = useState('')
   const [animKey, setAnimKey] = useState(0)
   const [animDir, setAnimDir] = useState<'left' | 'right'>('left')
   const [showPlayerChangeWarning, setShowPlayerChangeWarning] = useState(false)
@@ -49,12 +47,14 @@ export default function HomePage() {
   }
 
   useEffect(() => {
+    const cached = localStorage.getItem('lineup8-team-name') ?? ''
+    if (cached) setTeamName(cached)
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) return
-      fetch(`/api/auth?userId=${session.user.id}`)
+      fetch('/api/auth', { headers: { 'Authorization': `Bearer ${session.access_token}` } })
         .then(r => r.json())
         .then(json => {
-          if (json.team_name !== undefined) {
+          if (json.team_name) {
             setTeamName(json.team_name)
             localStorage.setItem('lineup8-team-name', json.team_name)
           }

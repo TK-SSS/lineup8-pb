@@ -35,6 +35,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         {/* Apply saved theme before first paint to prevent color flash */}
         <script dangerouslySetInnerHTML={{ __html: `(function(){var t=localStorage.getItem('lineup8-theme');if(t)document.documentElement.setAttribute('data-theme',t)})()` }} />
+        {/* Register service worker for offline support */}
+        <script dangerouslySetInnerHTML={{ __html: `if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js')})}` }} />
       </head>
       <body className="h-full flex flex-col bg-[#0d0a1f]">
         <ClientLayout>{children}</ClientLayout>

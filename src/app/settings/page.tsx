@@ -86,7 +86,12 @@ export default function SettingsPage() {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) return
     const { error } = await supabase.from('profiles').upsert({ id: session.user.id, team_name: teamNameDraft.trim() }, { onConflict: 'id' })
-    if (!error) { setTeamName(teamNameDraft.trim()); setMessage('保存しました') }
+    if (!error) {
+      const trimmed = teamNameDraft.trim()
+      setTeamName(trimmed)
+      localStorage.setItem('lineup8-team-name', trimmed)
+      setMessage('保存しました')
+    }
     setSaving(false)
   }
 
@@ -366,19 +371,17 @@ export default function SettingsPage() {
               className="w-full bg-transparent text-white text-sm outline-none border border-violet-700 rounded-lg p-3 placeholder-violet-600"
               style={{ fontSize: 16 }}
             />
-            {pwTouched && (
-              <div className="flex flex-col gap-1 px-1">
-                {PASSWORD_POLICY.map(r => {
-                  const ok = r.test(newPassword)
-                  return (
-                    <div key={r.label} className="flex items-center gap-1.5 text-xs">
-                      <span className={ok ? 'text-emerald-400' : 'text-gray-600'}>{ok ? '✓' : '✗'}</span>
-                      <span className={ok ? 'text-emerald-400' : 'text-violet-600'}>{r.label}</span>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
+            <div className="flex flex-col gap-1 px-1">
+              {PASSWORD_POLICY.map(r => {
+                const ok = r.test(newPassword)
+                return (
+                  <div key={r.label} className="flex items-center gap-1.5 text-xs">
+                    <span className={ok ? 'text-emerald-400' : 'text-gray-500'}>{ok ? '✓' : '○'}</span>
+                    <span className={ok ? 'text-emerald-400' : 'text-violet-500'}>{r.label}</span>
+                  </div>
+                )
+              })}
+            </div>
             <input
               type="password"
               value={confirmPassword}

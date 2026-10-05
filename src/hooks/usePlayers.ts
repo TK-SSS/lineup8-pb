@@ -26,6 +26,7 @@ export function usePlayers() {
 
   useEffect(() => {
     if (!loadComplete.current) return
+    if (!hasLocalChanges.current) return
     const t = setTimeout(() => storage.savePlayers(players), 400)
     return () => clearTimeout(t)
   }, [players])

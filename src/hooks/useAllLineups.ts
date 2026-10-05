@@ -21,6 +21,7 @@ export function useAllLineups() {
 
   useEffect(() => {
     if (!loadComplete.current) return
+    if (!hasLocalChanges.current) return
     const t = setTimeout(() => storage.saveLineups(all), 400)
     return () => clearTimeout(t)
   }, [all])
