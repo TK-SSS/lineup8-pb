@@ -283,7 +283,6 @@ export default function SettingsPage() {
                   </svg>
                 )}
               </span>
-              <span className="text-xs text-violet-300">{t.label}</span>
             </button>
           ))}
         </div>
