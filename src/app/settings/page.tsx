@@ -231,33 +231,6 @@ export default function SettingsPage() {
         {message && <p className="text-emerald-400 text-xs mt-2">{message}</p>}
       </div>
 
-      {/* ユーザー名 */}
-      <div className="bg-violet-950/50 border border-violet-800/40 rounded-xl p-4 mb-3">
-        <p className="text-violet-400 text-xs mb-2">ユーザー名（ログインに使用）</p>
-        <div className="flex items-center gap-2 border-b border-violet-700 pb-1">
-          <input
-            value={usernameDraft}
-            onChange={e => setUsernameDraft(e.target.value.replace(/\s/g, '').toLowerCase())}
-            className="flex-1 bg-transparent text-white text-base outline-none"
-            placeholder="ユーザー名を入力"
-            autoCapitalize="none"
-            autoCorrect="off"
-          />
-          <button
-            onClick={saveUsername}
-            disabled={usernameSaving || usernameDraft.trim() === username || !usernameDraft.trim()}
-            className="text-sm text-violet-300 border border-violet-600 rounded-lg px-3 py-1 disabled:opacity-40 shrink-0"
-          >
-            {usernameSaving ? '保存中...' : '保存'}
-          </button>
-        </div>
-        {usernameMessage && (
-          <p className={`text-xs mt-2 ${usernameMessage.includes('使用') || usernameMessage.includes('失敗') ? 'text-red-400' : 'text-emerald-400'}`}>
-            {usernameMessage}
-          </p>
-        )}
-      </div>
-
       {/* テーマカラー */}
       <div className="bg-violet-950/50 border border-violet-800/40 rounded-xl p-4 mb-3">
         <p className="text-violet-400 text-xs mb-3">テーマカラー</p>
@@ -325,6 +298,33 @@ export default function SettingsPage() {
           <path d="M9 18l6-6-6-6" />
         </svg>
       </Link>
+
+      {/* ユーザー名 */}
+      <div className="bg-violet-950/50 border border-violet-800/40 rounded-xl p-4 mb-3">
+        <p className="text-violet-400 text-xs mb-2">ユーザー名（ログインに使用）</p>
+        <div className="flex items-center gap-2 border-b border-violet-700 pb-1">
+          <input
+            value={usernameDraft}
+            onChange={e => setUsernameDraft(e.target.value.replace(/\s/g, '').toLowerCase())}
+            className="flex-1 bg-transparent text-white text-base outline-none"
+            placeholder="ユーザー名を入力"
+            autoCapitalize="none"
+            autoCorrect="off"
+          />
+          <button
+            onClick={saveUsername}
+            disabled={usernameSaving || usernameDraft.trim() === username || !usernameDraft.trim()}
+            className="text-sm text-violet-300 border border-violet-600 rounded-lg px-3 py-1 disabled:opacity-40 shrink-0"
+          >
+            {usernameSaving ? '保存中...' : '保存'}
+          </button>
+        </div>
+        {usernameMessage && (
+          <p className={`text-xs mt-2 ${usernameMessage.includes('使用') || usernameMessage.includes('失敗') ? 'text-red-400' : 'text-emerald-400'}`}>
+            {usernameMessage}
+          </p>
+        )}
+      </div>
 
       {/* ログアウト */}
       <button
